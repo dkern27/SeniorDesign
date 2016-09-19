@@ -52,7 +52,8 @@ muonHistogramPlot()
 
   }
 
-
-
+  TF1 *f1 = new TF1("f1", "pol2", 175,310);
+  muonHistogram->Fit("f1","R");
+  //muonHistogram.Fit("pol2", 175,310);
 
 }
