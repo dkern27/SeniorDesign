@@ -55,5 +55,8 @@ muonHistogramPlot()
   TF1 *f1 = new TF1("f1", "pol2", 175,310);
   muonHistogram->Fit("f1","R");
   //muonHistogram.Fit("pol2", 175,310);
+  //Background
+  //TF1 *f2 = new TF1("f2", "expo", 40,90);
+  //muonHistogram->Fit("f2","R");
 
 }
