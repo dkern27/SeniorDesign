@@ -22,21 +22,21 @@ muonHistogramPlot()
   muonHistogram->GetXaxis()->CenterTitle();
   muonHistogram->GetYaxis()->CenterTitle();
 
-  //Try High Resolution Search
-  //Int_t nbins = 500;
-  //Int_t xMin = 0;
-  //Int_t xMax = 500;
-  //TH1I *d = new TH1I("d","", nbins,xMin, xMax);
-  //float *source = new Double_t[nbins];
-  //float *dest = new Double_t[nbins];
-  //for(int i=0; i<nbins;i++) source[i]=muonHistogram->GetBinContent(i+1);
-  TSpectrum *spec = new TSpectrum(10);
-  spec->Search(muonHistogram, 1,"", 0.05);
-  //spec->SearchHighRes(source,dest,nbins,1,10,false,3,kTRUE,5);
-  //for (i=0; i<nbins;i++) d->SetBinContent(i+1, dest[i]);
-  //d->SetLineColor(kRed);
-  //d->Draw("SAME");
-  //spec->Draw("SAME");
+  //Search for peaks
+  TSpectrum *spec = new TSpectrum(2);
+  spec->Search(muonHistogram, 1, "", 0.05);
+  TList* functions = muonHistogram -> GetListOfFunctions();
+  TPolyMarker *pm = (TPolyMarker*)functions->FindObject("TPolyMarker");
+  int npeaks = spec->GetNPeaks();
+  Double_t* pmXArray = pm->GetX();
+  //Print the X positions of peaks
+  for (Int_t i=0; i<npeaks; i++)
+  {
+  	cout << "Peak " << i << ": "<< pmXArray[i] << endl;
+  }
+  //Fit around the second peak
+  TF1 *f1 = new TF1("f1", "pol2", pmXArray[1]-65,pmXArray[1]+65);
+  muonHistogram->Fit("f1","R");
 
   // muon traces
   if (makeTracePlots) {
@@ -49,14 +49,7 @@ muonHistogramPlot()
     muonTrace2->Draw("same");
     muonTrace3->Draw("same");
     muonTrace4->Draw("same");
-
   }
 
-  TF1 *f1 = new TF1("f1", "pol2", 175,310);
-  muonHistogram->Fit("f1","R");
-  //muonHistogram.Fit("pol2", 175,310);
-  //Background
-  //TF1 *f2 = new TF1("f2", "expo", 40,90);
-  //muonHistogram->Fit("f2","R");
 
 }
