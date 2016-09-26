@@ -19,7 +19,8 @@
 #include <TGraph.h>
 #include <TGraphErrors.h>
 #include <TSpectrum.h>
-
+#include <TList.h>
+#include <TPolyMarker.h>
 
 using namespace std;
 
