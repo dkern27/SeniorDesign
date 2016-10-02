@@ -36,8 +36,15 @@ muonHistogramPlot()
   }
   //Fit around the second peak
   TF1 *f1 = new TF1("f1", "pol2", pmXArray[1]-65,pmXArray[1]+65);
-  muonHistogram->Fit("f1","R");
+  //muonHistogram->Fit("f1","R");
 
+  //Fit based on peak of previous fit
+  float maxFitX=f1->GetMaximumX();
+  TF1 *f2 = new TF1("f2", "pol2", maxFitX-65, maxFitX+65); 
+  muonHistogram->Fit("f2","R");
+
+  float value = f1->GetParameter(0);
+  cout << value << endl;
   // muon traces
   if (makeTracePlots) {
     TCanvas *c2 = new TCanvas();
@@ -50,6 +57,5 @@ muonHistogramPlot()
     muonTrace3->Draw("same");
     muonTrace4->Draw("same");
   }
-
 
 }
