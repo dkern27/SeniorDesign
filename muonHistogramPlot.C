@@ -47,6 +47,7 @@ muonHistogramPlot()
   	muonHistogram->Fit("f1","R");
   }
 
+  //Output parameters
   float param0 = f1->GetParameter(0);
   float param0err = f1 ->GetParError(0);
   ofstream file;
