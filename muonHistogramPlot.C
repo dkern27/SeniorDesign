@@ -36,15 +36,21 @@ muonHistogramPlot()
   }
   //Fit around the second peak
   TF1 *f1 = new TF1("f1", "pol2", pmXArray[1]-65,pmXArray[1]+65);
-  //muonHistogram->Fit("f1","R");
-
-  //Fit based on peak of previous fit
+  muonHistogram->Fit("f1","R");
   float maxFitX=f1->GetMaximumX();
-  TF1 *f2 = new TF1("f2", "pol2", maxFitX-65, maxFitX+65); 
-  muonHistogram->Fit("f2","R");
+  //Fit based on peak of previous fit
+  for(int i=0; i<5; i++)
+  {
+  	maxFitX=f1->GetMaximumX();
+  	f1 = new TF1("f1", "pol2", maxFitX-65, maxFitX+65);
+  	muonHistogram->Fit("f1","R");
+  }
 
-  float value = f1->GetParameter(0);
-  cout << value << endl;
+  float param0 = f1->GetParameter(0);
+  float param0err = f1 ->GetParError(0);
+  ofstream file;
+  file.open("parameter0.txt", std::ios_base::app);
+  file << param0 << " " << param0err << endl;
   // muon traces
   if (makeTracePlots) {
     TCanvas *c2 = new TCanvas();
