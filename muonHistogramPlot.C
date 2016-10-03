@@ -37,6 +37,7 @@ muonHistogramPlot()
   //Fit around the second peak
   TF1 *f1 = new TF1("f1", "pol2", pmXArray[1]-65,pmXArray[1]+65);
   muonHistogram->Fit("f1","R");
+
   float maxFitX=f1->GetMaximumX();
   //Fit based on peak of previous fit
   for(int i=0; i<5; i++)

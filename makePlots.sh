@@ -3,7 +3,7 @@
 outdir=$1
 echo "using outdir $outdir"
 shift
-mkdir -p $outdir
+# mkdir -p $outdir
 for fullfile in $*;
 do
 	echo processing $fullfile
@@ -21,6 +21,6 @@ do
 	# 	exit 1
 	fi
 	./muonHistogram $fullfile
-	rt muonHistogramPlot.C
+	root -l -q muonHistogramPlot.C
 
 done

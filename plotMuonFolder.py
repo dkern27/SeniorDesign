@@ -1,4 +1,4 @@
-#!/usr/bin/bash
+#!/usr/bin/env python
 
 import os
 import sys
@@ -31,13 +31,16 @@ def makeHistograms():
     for dirName, subdirList, fileList in os.walk(results.asciiFiles):
         print('Found directory: %s' % dirName)
         for fname in fileList:
+            print fname
             # call(['rootbuild -o muonHistogram muonHistogram.cc $ROOTLIBS'], shell=True)
             # call(['./muonHistogram %s'%(dirName+'/'+fname)], shell=True)
             # call(['rt muonHistogramPlot.C'], shell=True)
 
-            call(['/bin/bash', '-i', '-c', 'rootbuild -o muonHistogram muonHistogram.cc $ROOTLIBS'])
-            # call(['/bin/bash', '-i', '-c', './muonHistogram %s'%(dirName+'/'+fname)])
-            # call(['/bin/bash', '-i', '-c', 'rt muonHistogramPlot.C'])
+            # call(['/bin/bash', '-i', '-c', 'rootbuild -o muonHistogram muonHistogram.cc $ROOTLIBS'])
+            call(['./muonHistogram', dirName+'/'+fname])
+            # call(['/bin/bash', '-i', '-c', './muonHistogram', dirName+'/'+fname])
+            # call(['/bin/bash', '-i', '-c', 'rt', '-q', 'muonHistogramPlot.C'])
+            call(['rt', '-q', 'muonHistogramPlot.C'])
 
 if __name__ == "__main__": 
     if (results.datFiles != None):
