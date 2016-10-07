@@ -11,7 +11,7 @@ do
 	filename=$(basename "$fullfile")
 	extension="${filename##*.}"
 	filename="${filename%.*}"
-	echo $extension
+	#echo $extension
 	if test "$extension" = "dat" ; then
 		./anamu -i $fullfile -o $outdir/$filename.txt
 		fullfile=$outdir/$filename.txt
@@ -23,6 +23,6 @@ do
 	fi
 	./muonHistogram $fullfile
 	echo -n "${filename} "  >> parameter0.txt
-	root -l -q muonHistogramPlot.C
+	root -l muonHistogramPlot.C
 
 done

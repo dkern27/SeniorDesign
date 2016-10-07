@@ -39,6 +39,7 @@ muonHistogramPlot()
   float maxFitX=f1->GetMaximumX();
 
   bool keepFitting = true;
+  int count=0;
   while(keepFitting)
   {
 
@@ -46,6 +47,10 @@ muonHistogramPlot()
     muonHistogram->Fit("f1","R");
     if(abs(maxFitX - f1->GetMaximumX()) <= 0.001)
       keepFitting = false;
+    else if(count >20) {
+      keepFitting = false;
+      cout << "Fit never stabalized, used 20 iterations for fit" << endl;
+    }
     maxFitX=f1->GetMaximumX();
   }
 
