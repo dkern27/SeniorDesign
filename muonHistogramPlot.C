@@ -9,8 +9,6 @@ muonHistogramPlot()
   char title[200];
   const bool makeTracePlots = false;
   
-  
-
   // histogram plotting
 
   // muon histogram
@@ -39,20 +37,37 @@ muonHistogramPlot()
   muonHistogram->Fit("f1","R");
 
   float maxFitX=f1->GetMaximumX();
-  //Fit based on peak of previous fit
-  for(int i=0; i<5; i++)
+
+  bool keepFitting = true;
+  while(keepFitting)
   {
-  	maxFitX=f1->GetMaximumX();
-  	f1 = new TF1("f1", "pol2", maxFitX-65, maxFitX+65);
-  	muonHistogram->Fit("f1","R");
+
+    f1 = new TF1("f1", "pol2", maxFitX-65, maxFitX+65);
+    muonHistogram->Fit("f1","R");
+    if(abs(maxFitX - f1->GetMaximumX()) <= 0.001)
+      keepFitting = false;
+    maxFitX=f1->GetMaximumX();
   }
 
   //Output parameters
-  float param0 = f1->GetParameter(0);
-  float param0err = f1 ->GetParError(0);
+  maxFitX = f1->GetMaximumX();
+  float c = f1->GetParameter(0);
+  float cerr = f1 ->GetParError(0);
+  float b = f1->GetParameter(1);
+  float berr = f1 ->GetParError(1);
+  float a = f1->GetParameter(2);
+  float aerr = f1 ->GetParError(2);
+
+  float maxX = (b*-1)/(2*a);
+  float dxda = b/(2*a*a);
+  float dxdb = -1/(2 * a);
+  float varianceX = pow(dxda*aerr, 2) + pow(dxdb * berr, 2);
+  cout << maxFitX << " " << maxX << " " << varianceX << endl;
   ofstream file;
   file.open("parameter0.txt", std::ios_base::app);
-  file << param0 << " " << param0err << endl;
+  file << c << " " << cerr << endl;
+
+  
   // muon traces
   if (makeTracePlots) {
     TCanvas *c2 = new TCanvas();
