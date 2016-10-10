@@ -1,0 +1,24 @@
+9/5/2016
+Setup ROOT
+Given a day of muon data to make sure ROOT works
+
+9/12/2016
+Find peak of data using TSpectrum
+
+9/19/2016
+Fit based on peak
+
+9/26/2016
+Do multiple fits on data
+
+10/3/2016
+Look at error from parameters of fit
+Fit until consecutive fits are same
+
+10/10/2016
+Compute our own reduced chi squared to compare to the fit chi squared
+Read about TTree
+Output VEM (x Max)
+Jeff is almost done setting up TTree
+Think about handling fit failure or peak failure due to small muon hump or no background hump or something
+	-Analyze spectrum to see if it's reasonable or something like that
