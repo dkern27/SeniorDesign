@@ -11,3 +11,7 @@ rootbuild -o muonHistogram muonHistogram.cc $ROOTLIBS
 
 3. Plot Histogram
 rt muonHistogramPlot.C
+
+Run it for directory of data
+./doAllData outputDirectory inputFiles
+ex) ./doAllData directory inputDirectory/*
