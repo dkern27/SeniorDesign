@@ -25,6 +25,10 @@
 
 using namespace std;
 
+TF1* findVem(TH1I*);
+float findVemError(TF1*);
+
+
 void Usage(string myName) {
   cout << endl;
   cout << " Synopsis : " << endl;
@@ -36,79 +40,6 @@ void Usage(string myName) {
 
   exit(0);
 }
-
-float FindVem(TH1I* muonHistogram) {
-
-  //Search for peaks
-  TSpectrum *spec = new TSpectrum(2);
-  spec->Search(muonHistogram, 1, "", 0.05);
-  TList* functions = muonHistogram -> GetListOfFunctions();
-  TPolyMarker *pm = (TPolyMarker*)functions->FindObject("TPolyMarker");
-  //int npeaks = spec->GetNPeaks();
-  Double_t* pmXArray = pm->GetX();
-
-  //Fit around the second peak
-  TF1 *f1 = new TF1("f1", "pol2", pmXArray[1]-65,pmXArray[1]+65);
-  muonHistogram->Fit("f1","R");
-
-  float maxFitX=f1->GetMaximumX();
-  float maxFitY=f1->GetMaximum();
-
-  bool keepFitting = true;
-  int count=1;
-  while(keepFitting)
-  {
-
-    f1 = new TF1("f1", "pol2", maxFitX-65, maxFitX+65);
-    muonHistogram->Fit("f1","R");
-    if(abs(maxFitX - f1->GetMaximumX()) <= 0.001){
-      keepFitting = false;
-      cout << "Fit stabilized after " << count << " iteration(s)." << endl;
-    }
-    else if(count >20) {
-      keepFitting = false;
-      cout << "Fit never stabilized, used 20 iterations for fit" << endl;
-    }
-    count++;
-    maxFitX=f1->GetMaximumX();
-    maxFitY=f1->GetMaximum();
-  }
-
-  return maxFitX;
-  
-
-}
-
-// float FindVemErr() {
-//   //Output parameters
-//   //maxFitX = f1->GetMaximumX();
-//   float c = f1->GetParameter(0);
-//   float cerr = f1 ->GetParError(0);
-//   float b = f1->GetParameter(1);
-//   float berr = f1 ->GetParError(1);
-//   float a = f1->GetParameter(2);
-//   float aerr = f1 ->GetParError(2);
-
-//   float maxX = (b*-1)/(2*a);
-//   float dxda = b/(2*a*a);
-//   float dxdb = -1/(2 * a);
-//   float varianceX = pow(dxda*aerr, 2) + pow(dxdb * berr, 2);
-//   float stdDevX = sqrt(varianceX);
-
-
-//   float dyda = maxFitX*maxFitX;
-//   float dydb = maxFitX;
-//   float varianceY = pow(dyda*aerr, 2) + pow(dydb*berr, 2) + pow(cerr, 2);
-//   float stdDevY = sqrt(varianceY);
-
-//   cout << "X: " << maxFitX << " Variance: " << varianceX << endl;
-//   cout << "Y: " << maxFitY << " Variance: " << varianceY << endl;
-//   ofstream file;
-//   file.open("parameter0.txt", std::ios_base::app);
-//   file << c << " " << cerr << endl;
-
-// }
-
 
 int main(int argc, char* argv[]) {
   
@@ -192,8 +123,11 @@ int main(int argc, char* argv[]) {
     //muonHistVem = FindVem(muonHist);
     //muonHistVemError = FindVemErr(muonHist);
 
-    muonHistVem = muonHist->GetMean();
-    muonHistVemError = muonHist->GetMeanError();
+    TF1 *fit = findVem(muonHist);
+    if(fit == NULL)
+      continue;
+    muonHistVem = fit->GetMaximumX();
+    muonHistVemError = 100;//findVemError(fit);
     //cout << "muonHistVem" << endl;
 
     // I recommend making your own function which is called here, takes the current histogram
@@ -225,4 +159,62 @@ int main(int argc, char* argv[]) {
   // if you want the program to exit to a root interpreter, leaving plots open, etc. don't 
   // close the root file, and insteda use 'theApp.Run()' at the end of the program.
 
+}
+
+TF1* findVem(TH1I* muonHistogram) 
+{
+  //Search for peaks
+  TSpectrum *spec = new TSpectrum(2);
+  spec->Search(muonHistogram, 1, "", 0.05);
+  TList* functions = muonHistogram -> GetListOfFunctions();
+  TPolyMarker *pm = (TPolyMarker*)functions->FindObject("TPolyMarker");
+  //int npeaks = spec->GetNPeaks();
+  Double_t* pmXArray = pm->GetX();
+
+  //Fit around the second peak
+  TF1 *f1 = new TF1("f1", "pol2", pmXArray[1]-65,pmXArray[1]+65);
+  muonHistogram->Fit("f1","Rq");
+
+  float maxFitX=f1->GetMaximumX();
+  float maxFitY=f1->GetMaximum();
+
+  bool keepFitting = true;
+  int count=1;
+  while(keepFitting)
+  {
+
+    f1 = new TF1("f1", "pol2", maxFitX-65, maxFitX+65);
+    muonHistogram->Fit("f1","Rq");
+    if(abs(maxFitX - f1->GetMaximumX()) <= 0.001){
+      keepFitting = false;
+      cout << "Fit stabilized after " << count << " iteration(s)." << endl;
+    }
+    else if(count > 20) {
+      keepFitting = false;
+      cout << "Fit never stabilized, used 20 iterations for fit" << endl;
+      return NULL;
+    }
+    count++;
+    maxFitX=f1->GetMaximumX();
+  }
+
+  return f1;
+}
+
+float findVemError(TF1* fit) {
+  //Output parameters
+  float c = fit->GetParameter(0);
+  float cerr = fit->GetParError(0);
+  float b = fit->GetParameter(1);
+  float berr = fit->GetParError(1);
+  float a = fit->GetParameter(2);
+  float aerr = fit->GetParError(2);
+
+  float maxX = (b*-1)/(2*a);
+  float dxda = b/(2*a*a);
+  float dxdb = -1/(2 * a);
+  float varianceX = pow(dxda*aerr, 2) + pow(dxdb * berr, 2);
+  float stdDevX = sqrt(varianceX);
+  cout << stdDevX << endl;
+  return stdDevX;
 }
