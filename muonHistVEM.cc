@@ -37,15 +37,7 @@ void Usage(string myName) {
   exit(0);
 }
 
-void FindVem(TH1I* muonHistogram) {
-    // muon histogram
-  //TCanvas *c1 = new TCanvas();
-  //sprintf(title, "%s", "A30 integrated muon peaks; A30 integrated peak counts; Number of muons ");
-  // muonHistogram->SetTitle(title);
-  // muonHistogram->SetAxisRange(0,500);
-  // muonHistogram->Draw();
-  // muonHistogram->GetXaxis()->CenterTitle();
-  // muonHistogram->GetYaxis()->CenterTitle();
+float FindVem(TH1I* muonHistogram) {
 
   //Search for peaks
   TSpectrum *spec = new TSpectrum(2);
@@ -54,11 +46,7 @@ void FindVem(TH1I* muonHistogram) {
   TPolyMarker *pm = (TPolyMarker*)functions->FindObject("TPolyMarker");
   //int npeaks = spec->GetNPeaks();
   Double_t* pmXArray = pm->GetX();
-  //Print the X positions of peaks
-  // for (Int_t i=0; i<npeaks; i++)
-  // {
-  //   cout << "Peak " << i << ": "<< pmXArray[i] << endl;
-  // }
+
   //Fit around the second peak
   TF1 *f1 = new TF1("f1", "pol2", pmXArray[1]-65,pmXArray[1]+65);
   muonHistogram->Fit("f1","R");
@@ -86,39 +74,40 @@ void FindVem(TH1I* muonHistogram) {
     maxFitY=f1->GetMaximum();
   }
 
-  //Output parameters
-  //maxFitX = f1->GetMaximumX();
-  float c = f1->GetParameter(0);
-  float cerr = f1 ->GetParError(0);
-  float b = f1->GetParameter(1);
-  float berr = f1 ->GetParError(1);
-  float a = f1->GetParameter(2);
-  float aerr = f1 ->GetParError(2);
-
-  float maxX = (b*-1)/(2*a);
-  float dxda = b/(2*a*a);
-  float dxdb = -1/(2 * a);
-  float varianceX = pow(dxda*aerr, 2) + pow(dxdb * berr, 2);
-  float stdDevX = sqrt(varianceX);
-
-
-  float dyda = maxFitX*maxFitX;
-  float dydb = maxFitX;
-  float varianceY = pow(dyda*aerr, 2) + pow(dydb*berr, 2) + pow(cerr, 2);
-  float stdDevY = sqrt(varianceY);
-
-  cout << "X: " << maxFitX << " Variance: " << varianceX << endl;
-  cout << "Y: " << maxFitY << " Variance: " << varianceY << endl;
-  ofstream file;
-  file.open("parameter0.txt", std::ios_base::app);
-  file << c << " " << cerr << endl;
-
+  return maxFitX;
+  
 
 }
 
-float FindVemErr() {
+// float FindVemErr() {
+//   //Output parameters
+//   //maxFitX = f1->GetMaximumX();
+//   float c = f1->GetParameter(0);
+//   float cerr = f1 ->GetParError(0);
+//   float b = f1->GetParameter(1);
+//   float berr = f1 ->GetParError(1);
+//   float a = f1->GetParameter(2);
+//   float aerr = f1 ->GetParError(2);
 
-}
+//   float maxX = (b*-1)/(2*a);
+//   float dxda = b/(2*a*a);
+//   float dxdb = -1/(2 * a);
+//   float varianceX = pow(dxda*aerr, 2) + pow(dxdb * berr, 2);
+//   float stdDevX = sqrt(varianceX);
+
+
+//   float dyda = maxFitX*maxFitX;
+//   float dydb = maxFitX;
+//   float varianceY = pow(dyda*aerr, 2) + pow(dydb*berr, 2) + pow(cerr, 2);
+//   float stdDevY = sqrt(varianceY);
+
+//   cout << "X: " << maxFitX << " Variance: " << varianceX << endl;
+//   cout << "Y: " << maxFitY << " Variance: " << varianceY << endl;
+//   ofstream file;
+//   file.open("parameter0.txt", std::ios_base::app);
+//   file << c << " " << cerr << endl;
+
+// }
 
 
 int main(int argc, char* argv[]) {
@@ -199,12 +188,12 @@ int main(int argc, char* argv[]) {
     // numbers will change from histogram to histogram, only here for example
     // and so the branch filling code has something to work with
     
-    FindVem(muonHist);
+    //FindVem(muonHist);
     //muonHistVem = FindVem(muonHist);
     //muonHistVemError = FindVemErr(muonHist);
 
-    //muonHistVem = muonHist->GetMean();
-    //muonHistVemError = muonHist->GetMeanError();
+    muonHistVem = muonHist->GetMean();
+    muonHistVemError = muonHist->GetMeanError();
     //cout << "muonHistVem" << endl;
 
     // I recommend making your own function which is called here, takes the current histogram
@@ -217,7 +206,8 @@ int main(int argc, char* argv[]) {
 
     //////////////////////////////////////////////////////////////////////////////
 
-    // fill the branches with the computed VEM and error values.    vemBranch->Fill();
+    // fill the branches with the computed VEM and error values.    
+    vemBranch->Fill();
     vemErrorBranch->Fill();
 
 
