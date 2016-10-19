@@ -1,3 +1,5 @@
+#include <TFormula.h>
+
 muonHistogramPlot()
 {
   gROOT->SetStyle("Plain");
@@ -37,25 +39,30 @@ muonHistogramPlot()
   muonHistogram->Fit("f1","R");
 
   float maxFitX=f1->GetMaximumX();
+  float maxFitY=f1->GetMaximum();
 
   bool keepFitting = true;
-  int count=0;
+  int count=1;
   while(keepFitting)
   {
 
     f1 = new TF1("f1", "pol2", maxFitX-65, maxFitX+65);
     muonHistogram->Fit("f1","R");
-    if(abs(maxFitX - f1->GetMaximumX()) <= 0.001)
+    if(abs(maxFitX - f1->GetMaximumX()) <= 0.001){
       keepFitting = false;
+      cout << "Fit stabilized after " << count << " iteration(s)." << endl;
+    }
     else if(count >20) {
       keepFitting = false;
-      cout << "Fit never stabalized, used 20 iterations for fit" << endl;
+      cout << "Fit never stabilized, used 20 iterations for fit" << endl;
     }
+    count++;
     maxFitX=f1->GetMaximumX();
+    maxFitY=f1->GetMaximum();
   }
 
   //Output parameters
-  maxFitX = f1->GetMaximumX();
+  //maxFitX = f1->GetMaximumX();
   float c = f1->GetParameter(0);
   float cerr = f1 ->GetParError(0);
   float b = f1->GetParameter(1);
@@ -67,7 +74,16 @@ muonHistogramPlot()
   float dxda = b/(2*a*a);
   float dxdb = -1/(2 * a);
   float varianceX = pow(dxda*aerr, 2) + pow(dxdb * berr, 2);
-  cout << maxFitX << " " << maxX << " " << varianceX << endl;
+  float stdDevX = sqrt(varianceX);
+
+
+  float dyda = maxFitX*maxFitX;
+  float dydb = maxFitX;
+  float varianceY = pow(dyda*aerr, 2) + pow(dydb*berr, 2) + pow(cerr, 2);
+  float stdDevY = sqrt(varianceY);
+
+  cout << "X: " << maxFitX << " Variance: " << varianceX << endl;
+  cout << "Y: " << maxFitY << " Variance: " << varianceY << endl;
   ofstream file;
   file.open("parameter0.txt", std::ios_base::app);
   file << c << " " << cerr << endl;

@@ -9,7 +9,7 @@ muonHistBatchPlot()
   TFile *f = new TFile("test.root");
   
   //limit the number of histograms to attempt to plot
-   const int maxPlot = 3; 
+   const int maxPlot = 10; 
 
   // grab the root tree from where it was stored intthe root file
   TTree *muonTree = (TTree*)f->Get("muonTree");

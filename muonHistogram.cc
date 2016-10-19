@@ -21,6 +21,7 @@
 #include <TSpectrum.h>
 #include <TList.h>
 #include <TPolyMarker.h>
+#include <TFormula.h>
 
 using namespace std;
 

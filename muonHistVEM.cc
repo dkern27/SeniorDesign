@@ -12,7 +12,7 @@
 #include "Riostream.h"
 #include <TROOT.h>
 #include "TApplication.h"
-
+#include <TSpectrum.h>
 #include <TTree.h>
 #include <TH1.h>
 #include <TH2.h>
@@ -21,6 +21,7 @@
 #include <TFile.h>
 #include <TGraph.h>
 #include <TGraphErrors.h>
+#include <TPolyMarker.h>
 
 using namespace std;
 
@@ -36,6 +37,88 @@ void Usage(string myName) {
   exit(0);
 }
 
+void FindVem(TH1I* muonHistogram) {
+    // muon histogram
+  //TCanvas *c1 = new TCanvas();
+  //sprintf(title, "%s", "A30 integrated muon peaks; A30 integrated peak counts; Number of muons ");
+  // muonHistogram->SetTitle(title);
+  // muonHistogram->SetAxisRange(0,500);
+  // muonHistogram->Draw();
+  // muonHistogram->GetXaxis()->CenterTitle();
+  // muonHistogram->GetYaxis()->CenterTitle();
+
+  //Search for peaks
+  TSpectrum *spec = new TSpectrum(2);
+  spec->Search(muonHistogram, 1, "", 0.05);
+  TList* functions = muonHistogram -> GetListOfFunctions();
+  TPolyMarker *pm = (TPolyMarker*)functions->FindObject("TPolyMarker");
+  //int npeaks = spec->GetNPeaks();
+  Double_t* pmXArray = pm->GetX();
+  //Print the X positions of peaks
+  // for (Int_t i=0; i<npeaks; i++)
+  // {
+  //   cout << "Peak " << i << ": "<< pmXArray[i] << endl;
+  // }
+  //Fit around the second peak
+  TF1 *f1 = new TF1("f1", "pol2", pmXArray[1]-65,pmXArray[1]+65);
+  muonHistogram->Fit("f1","R");
+
+  float maxFitX=f1->GetMaximumX();
+  float maxFitY=f1->GetMaximum();
+
+  bool keepFitting = true;
+  int count=1;
+  while(keepFitting)
+  {
+
+    f1 = new TF1("f1", "pol2", maxFitX-65, maxFitX+65);
+    muonHistogram->Fit("f1","R");
+    if(abs(maxFitX - f1->GetMaximumX()) <= 0.001){
+      keepFitting = false;
+      cout << "Fit stabilized after " << count << " iteration(s)." << endl;
+    }
+    else if(count >20) {
+      keepFitting = false;
+      cout << "Fit never stabilized, used 20 iterations for fit" << endl;
+    }
+    count++;
+    maxFitX=f1->GetMaximumX();
+    maxFitY=f1->GetMaximum();
+  }
+
+  //Output parameters
+  //maxFitX = f1->GetMaximumX();
+  float c = f1->GetParameter(0);
+  float cerr = f1 ->GetParError(0);
+  float b = f1->GetParameter(1);
+  float berr = f1 ->GetParError(1);
+  float a = f1->GetParameter(2);
+  float aerr = f1 ->GetParError(2);
+
+  float maxX = (b*-1)/(2*a);
+  float dxda = b/(2*a*a);
+  float dxdb = -1/(2 * a);
+  float varianceX = pow(dxda*aerr, 2) + pow(dxdb * berr, 2);
+  float stdDevX = sqrt(varianceX);
+
+
+  float dyda = maxFitX*maxFitX;
+  float dydb = maxFitX;
+  float varianceY = pow(dyda*aerr, 2) + pow(dydb*berr, 2) + pow(cerr, 2);
+  float stdDevY = sqrt(varianceY);
+
+  cout << "X: " << maxFitX << " Variance: " << varianceX << endl;
+  cout << "Y: " << maxFitY << " Variance: " << varianceY << endl;
+  ofstream file;
+  file.open("parameter0.txt", std::ios_base::app);
+  file << c << " " << cerr << endl;
+
+
+}
+
+float FindVemErr() {
+
+}
 
 
 int main(int argc, char* argv[]) {
@@ -60,13 +143,13 @@ int main(int argc, char* argv[]) {
     exit(0);
   }
 
-  // grab the root tree from where it was stored intthe root file
+  // grab the root tree from where it was stored in the root file
   TTree *muonTree = (TTree*)f.Get("muonTree");
   
   // find the size of the tree to limit looping beyond the end of the tree
   const int treeSize = muonTree->GetEntries();
 
-  // In order to get object information out of he branch, a valid pointer must pre-exist
+  // In order to get object information out of the branch, a valid pointer must pre-exist
   // the Tree GetEntry(i) call for the ith object 
   TH1I *muonHist = NULL;
   unsigned int *muonHistDate = NULL, *muonHistYear = NULL, *muonHistMonth = NULL, *muonHistDay = NULL;
@@ -115,8 +198,14 @@ int main(int argc, char* argv[]) {
     // my utterly fake 'VEM' which uses some info from the histogram so the 
     // numbers will change from histogram to histogram, only here for example
     // and so the branch filling code has something to work with
-    muonHistVem = muonHist->GetMean();
-    muonHistVemError = muonHist->GetMeanError();
+    
+    FindVem(muonHist);
+    //muonHistVem = FindVem(muonHist);
+    //muonHistVemError = FindVemErr(muonHist);
+
+    //muonHistVem = muonHist->GetMean();
+    //muonHistVemError = muonHist->GetMeanError();
+    //cout << "muonHistVem" << endl;
 
     // I recommend making your own function which is called here, takes the current histogram
     // as an argument, and gives back the VEM, VEMerror, and anything else you think is important
@@ -140,7 +229,7 @@ int main(int argc, char* argv[]) {
 
 
   f.Close();
-
+  //theApp.Run();
   cout << "TFile written to " << fileName << endl;
   
   // if you want the program to exit to a root interpreter, leaving plots open, etc. don't 
