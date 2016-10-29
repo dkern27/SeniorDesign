@@ -22,6 +22,7 @@
 #include <TGraph.h>
 #include <TGraphErrors.h>
 #include <TPolyMarker.h>
+#include <TCanvas.h>
 
 using namespace std;
 
@@ -107,53 +108,40 @@ int main(int argc, char* argv[]) {
     vemBranch = muonTree->Branch("muonHistVem", &muonHistVem, "muonHistVem/D");
     vemErrorBranch = muonTree->Branch("muonHistVemError", &muonHistVemError, "muonHistVemError/D");
   }
-
-
+  TCanvas *canvas = new TCanvas();
+  TGraphErrors *errPlot = new TGraphErrors();
   // loop through the histogram cases
   for (int treeStep = 0; treeStep < treeSize; treeStep++) {
     muonTree->GetEntry(treeStep);
 
     ///////////////////////////Find VEM /////////////////////////////////////////
-    
-    // my utterly fake 'VEM' which uses some info from the histogram so the 
-    // numbers will change from histogram to histogram, only here for example
-    // and so the branch filling code has something to work with
-    
-    //FindVem(muonHist);
-    //muonHistVem = FindVem(muonHist);
-    //muonHistVemError = FindVemErr(muonHist);
 
     TF1 *fit = findVem(muonHist);
     if(fit == NULL)
       continue;
     muonHistVem = fit->GetMaximumX();
-    muonHistVemError = 100;//findVemError(fit);
+    float error = findVemError(fit);
+    muonHistVemError = error;
     //cout << "muonHistVem" << endl;
-
-    // I recommend making your own function which is called here, takes the current histogram
-    // as an argument, and gives back the VEM, VEMerror, and anything else you think is important
-
-    // If you are working on multiple VEM computation methods, you can create a function for each
-    // and a new branch for each (more code needed above for additional new branches of course)
-    // and then do a comparative study later
-
-
+    errPlot->SetPoint(treeStep, treeStep, error);
+    errPlot->SetPointError(treeStep, 0 , error);
     //////////////////////////////////////////////////////////////////////////////
 
     // fill the branches with the computed VEM and error values.    
     vemBranch->Fill();
     vemErrorBranch->Fill();
-
-
-
   }
 
   // overwrite the muon tree to include the new data
   muonTree->Write("", TObject::kOverwrite);
-
-
-  f.Close();
-  //theApp.Run();
+  errPlot->SetTitle("Dylan and Hanna's ultra fun graph!");
+  errPlot->SetMarkerStyle(29);
+  errPlot->SetMarkerColor(kSpring-1);
+  errPlot->SetMarkerSize(4);
+  errPlot->Draw("AP");
+  errPlot->Fit("pol0");
+  //f.Close();
+  theApp.Run();
   cout << "TFile written to " << fileName << endl;
   
   // if you want the program to exit to a root interpreter, leaving plots open, etc. don't 
