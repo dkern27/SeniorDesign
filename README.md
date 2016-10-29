@@ -1,6 +1,6 @@
 # SeniorDesign
 Sometimes we code stuff for science
-
+Process single data file
 1. binary -> ascii
 gcc -o anamu anamu.c gpsutil.c
 ./anamu -o OUTPUTFILE.txt -i INPUTFILE.dat
@@ -12,6 +12,13 @@ rootbuild -o muonHistogram muonHistogram.cc $ROOTLIBS
 3. Plot Histogram
 rt muonHistogramPlot.C
 
+------------------------------------------------------
+
 Run it for directory of data
-./doAllData outputDirectory inputFiles
-ex) ./doAllData directory inputDirectory/*
+rootbuild -o muonHistVEM muonHistVEM.cc $ROOTLIBS
+rootbuild -o muonHistFromBinary muonHistFromBinary.cc $ROOTLIBS
+./muonHistFromBinary inputFileDirectory
+./muonHistVEM test.root
+
+View multiple graphs
+rt muonHistBatchPlot.C
