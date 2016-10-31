@@ -134,10 +134,9 @@ int main(int argc, char* argv[]) {
 
   // overwrite the muon tree to include the new data
   muonTree->Write("", TObject::kOverwrite);
-  errPlot->SetTitle("Dylan and Hanna's ultra fun graph!");
-  errPlot->SetMarkerStyle(29);
-  errPlot->SetMarkerColor(kSpring-1);
-  errPlot->SetMarkerSize(4);
+  errPlot->SetTitle("Errors");
+  errPlot->SetMarkerStyle(20);
+  errPlot->SetMarkerColor(kBlue);
   errPlot->Draw("AP");
   errPlot->Fit("pol0");
   //f.Close();
@@ -203,6 +202,6 @@ float findVemError(TF1* fit) {
   float dxdb = -1/(2 * a);
   float varianceX = pow(dxda*aerr, 2) + pow(dxdb * berr, 2);
   float stdDevX = sqrt(varianceX);
-  cout << stdDevX << endl;
+  //cout << stdDevX << endl;
   return stdDevX;
 }
