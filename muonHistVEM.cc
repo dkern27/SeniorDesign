@@ -152,7 +152,7 @@ TF1* findVem(TH1I* muonHistogram)
 {
   //Search for peaks
   TSpectrum *spec = new TSpectrum(2);
-  spec->Search(muonHistogram, 1, "", 0.05);
+  spec->Search(muonHistogram, 3, "nobackground", 0.5);
   TList* functions = muonHistogram -> GetListOfFunctions();
   TPolyMarker *pm = (TPolyMarker*)functions->FindObject("TPolyMarker");
   //int npeaks = spec->GetNPeaks();
