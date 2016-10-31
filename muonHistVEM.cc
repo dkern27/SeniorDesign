@@ -26,7 +26,7 @@
 
 using namespace std;
 
-TF1* findVem(TH1I*);
+TF1* findVem(TH1I*, bool = false);
 float findVemError(TF1*);
 
 
@@ -110,6 +110,9 @@ int main(int argc, char* argv[]) {
   }
   TCanvas *canvas = new TCanvas();
   TGraphErrors *errPlot = new TGraphErrors();
+
+  bool didNotPlot[treeSize] = {false};
+
   // loop through the histogram cases
   for (int treeStep = 0; treeStep < treeSize; treeStep++) {
     muonTree->GetEntry(treeStep);
@@ -117,8 +120,10 @@ int main(int argc, char* argv[]) {
     ///////////////////////////Find VEM /////////////////////////////////////////
 
     TF1 *fit = findVem(muonHist);
-    if(fit == NULL)
+    if(fit == NULL){
+      didNotPlot[treeStep] = true; //cout << "Plot " << treeStep << " never stabalized" << endl;
       continue;
+    }
     muonHistVem = fit->GetMaximumX();
     float error = findVemError(fit);
     muonHistVemError = error;
@@ -132,6 +137,11 @@ int main(int argc, char* argv[]) {
     vemErrorBranch->Fill();
   }
 
+  cout << "Failed to plot: " << endl;
+  for (int i = 0; i < sizeof(didNotPlot); i++){
+    if (didNotPlot[i]) cout << i << ", ";
+  }
+
   // overwrite the muon tree to include the new data
   muonTree->Write("", TObject::kOverwrite);
   errPlot->SetTitle("Errors");
@@ -139,16 +149,18 @@ int main(int argc, char* argv[]) {
   errPlot->SetMarkerColor(kBlue);
   errPlot->Draw("AP");
   errPlot->Fit("pol0");
-  //f.Close();
-  theApp.Run();
+  f.Close();
+  //theApp.Run();
   cout << "TFile written to " << fileName << endl;
+
+
   
   // if you want the program to exit to a root interpreter, leaving plots open, etc. don't 
   // close the root file, and insteda use 'theApp.Run()' at the end of the program.
 
 }
 
-TF1* findVem(TH1I* muonHistogram) 
+TF1* findVem(TH1I* muonHistogram, bool plot) 
 {
   //Search for peaks
   TSpectrum *spec = new TSpectrum(2);
