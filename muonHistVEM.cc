@@ -123,7 +123,7 @@ int main(int argc, char* argv[]) {
     float error = findVemError(fit);
     muonHistVemError = error;
     //cout << "muonHistVem" << endl;
-    errPlot->SetPoint(treeStep, treeStep, error);
+    errPlot->SetPoint(treeStep, treeStep, muonHistVem);
     errPlot->SetPointError(treeStep, 0 , error);
     //////////////////////////////////////////////////////////////////////////////
 
