@@ -22,3 +22,10 @@ Output VEM (x Max)
 Jeff is almost done setting up TTree
 Think about handling fit failure or peak failure due to small muon hump or no background hump or something
 	-Analyze spectrum to see if it's reasonable or something like that
+
+10/24
+Plot error and VEM for each histogram
+
+10/31
+Double check error
+Show histograms that fail fit
