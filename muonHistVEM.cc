@@ -108,20 +108,21 @@ int main(int argc, char* argv[]) {
     vemBranch = muonTree->Branch("muonHistVem", &muonHistVem, "muonHistVem/D");
     vemErrorBranch = muonTree->Branch("muonHistVemError", &muonHistVemError, "muonHistVemError/D");
   }
-  TCanvas *canvas = new TCanvas();
+
   TGraphErrors *errPlot = new TGraphErrors();
 
-  bool didNotPlot[treeSize] = {false};
+  vector<int> didNotPlot;
 
   // loop through the histogram cases
   for (int treeStep = 0; treeStep < treeSize; treeStep++) {
     muonTree->GetEntry(treeStep);
-
     ///////////////////////////Find VEM /////////////////////////////////////////
 
     TF1 *fit = findVem(muonHist);
     if(fit == NULL){
-      didNotPlot[treeStep] = true; //cout << "Plot " << treeStep << " never stabalized" << endl;
+      TCanvas* c2 = new TCanvas();
+      didNotPlot.push_back(treeStep); //cout << "Plot " << treeStep << " never stabalized" << endl;
+      muonHist->DrawCopy();
       continue;
     }
     muonHistVem = fit->GetMaximumX();
@@ -137,20 +138,25 @@ int main(int argc, char* argv[]) {
     vemErrorBranch->Fill();
   }
 
-  cout << "Failed to plot: " << endl;
-  for (int i = 0; i < sizeof(didNotPlot); i++){
-    if (didNotPlot[i]) cout << i << ", ";
-  }
-
   // overwrite the muon tree to include the new data
   muonTree->Write("", TObject::kOverwrite);
+  TCanvas *canvas = new TCanvas();
   errPlot->SetTitle("Errors");
   errPlot->SetMarkerStyle(20);
   errPlot->SetMarkerColor(kBlue);
   errPlot->Draw("AP");
   errPlot->Fit("pol0");
-  f.Close();
-  //theApp.Run();
+
+  for (int i : didNotPlot)
+  {
+    TCanvas* c2 = new TCanvas();
+    cout << i << " ";
+    muonTree->GetEntry(i);
+    muonHist->Draw();
+  }
+
+  //f.Close();
+  theApp.Run();
   cout << "TFile written to " << fileName << endl;
 
 
