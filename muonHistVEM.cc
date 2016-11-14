@@ -26,7 +26,7 @@
 
 using namespace std;
 
-TF1* findVem(TH1I*, bool = false);
+TF1* findVem(TH1I*);
 float findVemError(TF1*);
 
 
@@ -120,9 +120,7 @@ int main(int argc, char* argv[]) {
 
     TF1 *fit = findVem(muonHist);
     if(fit == NULL){
-      TCanvas* c2 = new TCanvas();
-      didNotPlot.push_back(treeStep); //cout << "Plot " << treeStep << " never stabalized" << endl;
-      muonHist->DrawCopy();
+      didNotPlot.push_back(treeStep);
       continue;
     }
     muonHistVem = fit->GetMaximumX();
@@ -147,14 +145,9 @@ int main(int argc, char* argv[]) {
   errPlot->Draw("AP");
   errPlot->Fit("pol0");
 
-  for (int i : didNotPlot)
-  {
-    TCanvas* c2 = new TCanvas();
-    cout << i << " ";
-    muonTree->GetEntry(i);
-    muonHist->Draw();
-  }
-
+  for (int i = 0; i < didNotPlot.size(); i++)
+    cout << didNotPlot[i] << " ";
+  cout << endl;
   //f.Close();
   theApp.Run();
   cout << "TFile written to " << fileName << endl;
@@ -166,7 +159,7 @@ int main(int argc, char* argv[]) {
 
 }
 
-TF1* findVem(TH1I* muonHistogram, bool plot) 
+TF1* findVem(TH1I* muonHistogram) 
 {
   //Search for peaks
   TSpectrum *spec = new TSpectrum(2);

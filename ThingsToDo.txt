@@ -29,3 +29,9 @@ Plot error and VEM for each histogram
 10/31
 Double check error
 Show histograms that fail fit
+
+
+11/7
+Make it so bad plots can be shown. Use another script to show them (like in Jeffs BatchPlot)
+Errors are probably fine.
+Make more fitting algorithms to capture all the ones that dont work
