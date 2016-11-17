@@ -145,11 +145,15 @@ int main(int argc, char* argv[]) {
   errPlot->Draw("AP");
   errPlot->Fit("pol0");
 
-  for (int i = 0; i < didNotPlot.size(); i++)
-    cout << didNotPlot[i] << " ";
   cout << endl;
-  //f.Close();
-  theApp.Run();
+  ofstream file("failedIndexes.txt", ofstream::trunc);
+  for (int i = 0; i < didNotPlot.size(); i++)
+    file << didNotPlot[i] << endl;
+  cout << "Failed plot indexes written to "<< "failedIndexes.txt" << endl;
+  file.close();
+
+  f.Close();
+  //theApp.Run();
   cout << "TFile written to " << fileName << endl;
 
 
@@ -195,7 +199,6 @@ TF1* findVem(TH1I* muonHistogram)
     count++;
     maxFitX=f1->GetMaximumX();
   }
-
   return f1;
 }
 

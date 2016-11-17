@@ -76,6 +76,9 @@ muonHistBatchPlotFailed(string fileName)
     muonHistList[j]->SetLineWidth(2);
     muonHistList[j]->SetLineColor(kBlue+2);
     
+    TSpectrum *spec = new TSpectrum(2);
+    spec->Search(muonHistList[j], 3, "nobackground", 0.5);
+
     // don't be a good programmer and clean up your memory, or you will lose your plots
 
   }
