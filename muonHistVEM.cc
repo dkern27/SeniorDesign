@@ -138,7 +138,7 @@ int main(int argc, char* argv[]) {
 
   // overwrite the muon tree to include the new data
   muonTree->Write("", TObject::kOverwrite);
-  TCanvas *canvas = new TCanvas();
+  
   errPlot->SetTitle("Errors");
   errPlot->SetMarkerStyle(20);
   errPlot->SetMarkerColor(kBlue);
@@ -146,14 +146,17 @@ int main(int argc, char* argv[]) {
   errPlot->Fit("pol0");
 
   cout << endl;
-  ofstream file("failedIndexes.txt", ofstream::trunc);
-  for (int i = 0; i < didNotPlot.size(); i++)
-    file << didNotPlot[i] << endl;
-  cout << "Failed plot indexes written to "<< "failedIndexes.txt" << endl;
-  file.close();
+  if(didNotPlot.size() != 0)
+  {
+    ofstream file("failedIndexes.txt", ofstream::trunc);
+    for (int i = 0; i < didNotPlot.size(); i++)
+      file << didNotPlot[i] << endl;
+    cout << "Failed plot indexes written to "<< "failedIndexes.txt" << endl;
+    file.close();
+  }
 
-  f.Close();
-  //theApp.Run();
+  //f.Close();
+  theApp.Run();
   cout << "TFile written to " << fileName << endl;
 
 
@@ -166,6 +169,7 @@ int main(int argc, char* argv[]) {
 TF1* findVem(TH1I* muonHistogram) 
 {
   //Search for peaks
+  muonHistogram->Rebin(5);
   TSpectrum *spec = new TSpectrum(2);
   spec->Search(muonHistogram, 3, "nobackground", 0.5);
   TList* functions = muonHistogram -> GetListOfFunctions();
@@ -187,13 +191,13 @@ TF1* findVem(TH1I* muonHistogram)
 
     f1 = new TF1("f1", "pol2", maxFitX-65, maxFitX+65);
     muonHistogram->Fit("f1","Rq");
-    if(abs(maxFitX - f1->GetMaximumX()) <= 0.001){
+    if(abs(maxFitX - f1->GetMaximumX()) <= 1){//Play with threshhold
       keepFitting = false;
-      cout << "Fit stabilized after " << count << " iteration(s)." << endl;
+      //cout << "Fit stabilized after " << count << " iteration(s)." << endl;
     }
     else if(count > 20) {
-      keepFitting = false;
-      cout << "Fit never stabilized, used 20 iterations for fit" << endl;
+      //cout << "Fit never stabilized, used 20 iterations for fit" << endl;
+      //cout << abs(maxFitX - f1->GetMaximumX()) << endl;
       return NULL;
     }
     count++;

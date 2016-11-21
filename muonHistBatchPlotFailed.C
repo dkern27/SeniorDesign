@@ -67,7 +67,7 @@ muonHistBatchPlotFailed(string fileName)
 
     // make some style changes, for demonstration
     muonHistList[j]->Draw();
-    muonHistList[j]->Rebin(i%9+1);
+    muonHistList[j]->Rebin(5);
     muonHistList[j]->GetXaxis()->CenterTitle();
     muonHistList[j]->GetYaxis()->CenterTitle();
     muonHistList[j]->GetYaxis()->SetTitleOffset(1.15);
