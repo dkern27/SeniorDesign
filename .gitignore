@@ -33,3 +33,6 @@ muonData/*
 *.root
 MHFB
 MHV
+muonHistVEM
+muonHistFromBinary
+failedIndexes.txt

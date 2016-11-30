@@ -91,7 +91,7 @@ int main(int argc, char* argv[]) {
   // branch definitions to hold new branches for VEM and VEMerror
   TBranch *vemBranch = NULL;
   TBranch *vemErrorBranch = NULL;
-
+  gErrorIgnoreLevel=kError;
   // check for the existence of a VEM branch. If this program has been run on a muon histogram tree already
   // then a VEM branch will have already been added.  It's a bit more work up front, but allows any follow-on
   // code to run exactly the same without checking back to which case we started with
@@ -112,25 +112,27 @@ int main(int argc, char* argv[]) {
   TGraphErrors *errPlot = new TGraphErrors();
 
   vector<int> didNotPlot;
-
+  int point = 0;
   // loop through the histogram cases
   for (int treeStep = 0; treeStep < treeSize; treeStep++) {
     muonTree->GetEntry(treeStep);
     ///////////////////////////Find VEM /////////////////////////////////////////
-
+    if(muonHist->GetEntries() < 64064)
+      continue;
     TF1 *fit = findVem(muonHist);
     if(fit == NULL){
       didNotPlot.push_back(treeStep);
       continue;
     }
+    cout << fit->GetMaximumX() << endl;
     muonHistVem = fit->GetMaximumX();
     float error = findVemError(fit);
     muonHistVemError = error;
-    //cout << "muonHistVem" << endl;
-    errPlot->SetPoint(treeStep, treeStep, muonHistVem);
-    errPlot->SetPointError(treeStep, 0 , error);
+    
+    errPlot->SetPoint(point, point, muonHistVem);
+    errPlot->SetPointError(point, 0 , error);
     //////////////////////////////////////////////////////////////////////////////
-
+    point++;
     // fill the branches with the computed VEM and error values.    
     vemBranch->Fill();
     vemErrorBranch->Fill();
@@ -191,13 +193,13 @@ TF1* findVem(TH1I* muonHistogram)
 
     f1 = new TF1("f1", "pol2", maxFitX-65, maxFitX+65);
     muonHistogram->Fit("f1","Rq");
-    if(abs(maxFitX - f1->GetMaximumX()) <= 1){//Play with threshhold
+    if(abs(maxFitX - f1->GetMaximumX()) <= 3){//Play with threshhold
       keepFitting = false;
       //cout << "Fit stabilized after " << count << " iteration(s)." << endl;
     }
     else if(count > 20) {
       //cout << "Fit never stabilized, used 20 iterations for fit" << endl;
-      //cout << abs(maxFitX - f1->GetMaximumX()) << endl;
+      cout << abs(maxFitX - f1->GetMaximumX()) << endl;
       return NULL;
     }
     count++;
