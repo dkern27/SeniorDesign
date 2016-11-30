@@ -1,6 +1,8 @@
+#include <algorithm>
+
 using namespace std;
 
-muonHistBatchPlotFailed(string fileName, bool showFit=false)
+muonHistBatchPlotFailed(string fileName, string rootFile, bool showFit=false)
 {
   cout << fileName << endl;
   ifstream file(fileName.c_str(), ios_base::in);
@@ -26,7 +28,7 @@ muonHistBatchPlotFailed(string fileName, bool showFit=false)
   gStyle->SetPalette(1,0); 
 
   // open the root file where the muon histograms are stored
-  TFile *f = new TFile("test.root");
+  TFile *f = new TFile("muons2014.root");
   
   //limit the number of histograms to attempt to plot
    const int maxPlot = 25; 
@@ -39,7 +41,7 @@ muonHistBatchPlotFailed(string fileName, bool showFit=false)
 
   // In order to get object information out of he branch, a valid pointer must pre-exist
   // the Tree GetEntry(i) call for the ith object
-  TH1I *muonHistList[25];
+  TH1I *muonHistList[maxPlot];
 
   // I know my re-binning wil cause warnings some of the time, ignoring them
   gErrorIgnoreLevel = kWarning +2;
@@ -65,23 +67,34 @@ muonHistBatchPlotFailed(string fileName, bool showFit=false)
     // and overwrite the previous histogram
     TCanvas* c = new TCanvas();
 
-    muonHistList[j]->Rebin(5);
+    // muonHistList[j]->Rebin(5);
 
+
+
+    // make some style changes, for demonstration
+    muonHistList[j]->Draw();
+    muonHistList[j]->Rebin(5);
+    muonHistList[j]->GetXaxis()->CenterTitle();
+    muonHistList[j]->GetYaxis()->CenterTitle();
+    muonHistList[j]->GetYaxis()->SetTitleOffset(1.15);
+    muonHistList[j]->GetYaxis()->SetTitleSize(0.040);
+    muonHistList[j]->GetXaxis()->SetRangeUser(30,1200);
+    muonHistList[j]->SetLineWidth(2);
+    muonHistList[j]->SetLineColor(kBlue+2);
+    
     // Display the final fit produced for the plot
     if(showFit){
       //Search for peaks
       TSpectrum *spec = new TSpectrum(2);
       spec->Search(muonHistList[j], 3, "nobackground", 0.5);
-      TList* functions = muonHistList[j] -> GetListOfFunctions();
-      TPolyMarker *pm = (TPolyMarker*)functions->FindObject("TPolyMarker");
-      //int npeaks = spec->GetNPeaks();
-      Double_t* pmXArray = pm->GetX();
+      float* xArray = spec->GetPositionX();
+      float spectrumX = *max_element(xArray, xArray+2);
 
-      TF1 *f1 = new TF1("f1", "pol2", pmXArray[1]-65,pmXArray[1]+65);
+      //Fit around the second peak
+      TF1 *f1 = new TF1("f1", "pol2", spectrumX-65, spectrumX+65);
       muonHistList[j]->Fit("f1","Rq");
 
-      float maxFitX=f1->GetMaximumX();
-      float maxFitY=f1->GetMaximum();
+      double maxFitX=f1->GetMaximumX();
 
       bool keepFitting = true;
       int count=1;
@@ -103,16 +116,6 @@ muonHistBatchPlotFailed(string fileName, bool showFit=false)
       }
     }
 
-    // make some style changes, for demonstration
-    muonHistList[j]->Draw();
-    muonHistList[j]->GetXaxis()->CenterTitle();
-    muonHistList[j]->GetYaxis()->CenterTitle();
-    muonHistList[j]->GetYaxis()->SetTitleOffset(1.15);
-    muonHistList[j]->GetYaxis()->SetTitleSize(0.040);
-    muonHistList[j]->GetXaxis()->SetRangeUser(30,1200);
-    muonHistList[j]->SetLineWidth(2);
-    muonHistList[j]->SetLineColor(kBlue+2);
-    
     TSpectrum *spec = new TSpectrum(2);
     spec->Search(muonHistList[j], 3, "nobackground", 0.5);
 
@@ -121,7 +124,7 @@ muonHistBatchPlotFailed(string fileName, bool showFit=false)
   }
 
   if (j == maxPlot)
-    cout << "Over 25 failed fits!" << endl;
+    cout << "Over " << maxPlot << " failed fits!" << endl;
 
 
 }
