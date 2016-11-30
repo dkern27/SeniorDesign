@@ -6,6 +6,7 @@
 #include <iomanip>
 #include <vector>
 #include <string>
+#include <algorithm>
 
 
 // root include files
@@ -125,7 +126,6 @@ int main(int argc, char* argv[]) {
       didNotPlot.push_back(treeStep);
       continue;
     }
-    cout << fit->GetMaximumX() << endl;
     muonHistVem = fit->GetMaximumX();
     float error = findVemError(fit);
     muonHistVemError = error;
@@ -176,17 +176,14 @@ TF1* findVem(TH1I* muonHistogram)
   muonHistogram->Rebin(5);
   TSpectrum *spec = new TSpectrum(2);
   spec->Search(muonHistogram, 3, "nobackground", 0.5);
-  TList* functions = muonHistogram -> GetListOfFunctions();
-  TPolyMarker *pm = (TPolyMarker*)functions->FindObject("TPolyMarker");
-  //int npeaks = spec->GetNPeaks();
-  Double_t* pmXArray = pm->GetX();
-
+  float* xArray = spec->GetPositionX();
+  float spectrumX = *max_element(xArray, xArray+2);
+  
   //Fit around the second peak
-  TF1 *f1 = new TF1("f1", "pol2", pmXArray[1]-65,pmXArray[1]+65);
+  TF1 *f1 = new TF1("f1", "pol2", spectrumX-65, spectrumX+65);
   muonHistogram->Fit("f1","Rq");
 
-  float maxFitX=f1->GetMaximumX();
-  float maxFitY=f1->GetMaximum();
+  double maxFitX=f1->GetMaximumX();
 
   bool keepFitting = true;
   int count=1;
@@ -195,13 +192,13 @@ TF1* findVem(TH1I* muonHistogram)
 
     f1 = new TF1("f1", "pol2", maxFitX-65, maxFitX+65);
     muonHistogram->Fit("f1","Rq");
-    if(abs(maxFitX - f1->GetMaximumX()) <= 3){//Play with threshhold
+    if(abs(maxFitX - f1->GetMaximumX()) <= 1){//Play with threshhold
       keepFitting = false;
       //cout << "Fit stabilized after " << count << " iteration(s)." << endl;
     }
     else if(count > 20) {
       //cout << "Fit never stabilized, used 20 iterations for fit" << endl;
-      cout << abs(maxFitX - f1->GetMaximumX()) << endl;
+      //cout << abs(maxFitX - f1->GetMaximumX()) << endl;
       return NULL;
     }
     count++;
