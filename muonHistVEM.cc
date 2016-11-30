@@ -119,8 +119,8 @@ int main(int argc, char* argv[]) {
     muonTree->GetEntry(treeStep);
     ///////////////////////////Find VEM /////////////////////////////////////////
 
-    cout << treeStep << endl;
-    if (treeStep!=2337) {
+    if (muonHist->GetEntries() < 64064/2) //Half number of entries per file at least
+      continue; 
     TF1 *fit = findVem(muonHist);
     if(fit == NULL){
       didNotPlot.push_back(treeStep);
@@ -137,7 +137,7 @@ int main(int argc, char* argv[]) {
     // fill the branches with the computed VEM and error values.    
     vemBranch->Fill();
     vemErrorBranch->Fill();
-  }
+  
   }
 
   // overwrite the muon tree to include the new data
@@ -192,7 +192,7 @@ TF1* findVem(TH1I* muonHistogram)
 
     f1 = new TF1("f1", "pol2", maxFitX-65, maxFitX+65);
     muonHistogram->Fit("f1","Rq");
-    if(abs(maxFitX - f1->GetMaximumX()) <= 1){//Play with threshhold
+    if(abs(maxFitX - f1->GetMaximumX()) <= 5){//Play with threshhold
       keepFitting = false;
       //cout << "Fit stabilized after " << count << " iteration(s)." << endl;
     }
