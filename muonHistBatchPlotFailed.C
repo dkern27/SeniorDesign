@@ -1,6 +1,6 @@
 using namespace std;
 
-muonHistBatchPlotFailed(string fileName)
+muonHistBatchPlotFailed(string fileName, bool showFit=false)
 {
   cout << fileName << endl;
   ifstream file(fileName.c_str(), ios_base::in);
@@ -65,9 +65,46 @@ muonHistBatchPlotFailed(string fileName)
     // and overwrite the previous histogram
     TCanvas* c = new TCanvas();
 
+    muonHistList[j]->Rebin(5);
+
+    // Display the final fit produced for the plot
+    if(showFit){
+      //Search for peaks
+      TSpectrum *spec = new TSpectrum(2);
+      spec->Search(muonHistList[j], 3, "nobackground", 0.5);
+      TList* functions = muonHistList[j] -> GetListOfFunctions();
+      TPolyMarker *pm = (TPolyMarker*)functions->FindObject("TPolyMarker");
+      //int npeaks = spec->GetNPeaks();
+      Double_t* pmXArray = pm->GetX();
+
+      TF1 *f1 = new TF1("f1", "pol2", pmXArray[1]-65,pmXArray[1]+65);
+      muonHistList[j]->Fit("f1","Rq");
+
+      float maxFitX=f1->GetMaximumX();
+      float maxFitY=f1->GetMaximum();
+
+      bool keepFitting = true;
+      int count=1;
+      while(keepFitting)
+      {
+
+        f1 = new TF1("f1", "pol2", maxFitX-65, maxFitX+65);
+        muonHistList[j]->Fit("f1","Rq");
+        if(abs(maxFitX - f1->GetMaximumX()) <= 3){//Play with threshhold
+          keepFitting = false;
+          //cout << "Fit stabilized after " << count << " iteration(s)." << endl;
+        }
+        else if(count > 20) {
+          //cout << "Fit never stabilized, used 20 iterations for fit" << endl;
+          break;
+        }
+        count++;
+        //maxFitX=f1->GetMaximumX();
+      }
+    }
+
     // make some style changes, for demonstration
     muonHistList[j]->Draw();
-    muonHistList[j]->Rebin(5);
     muonHistList[j]->GetXaxis()->CenterTitle();
     muonHistList[j]->GetYaxis()->CenterTitle();
     muonHistList[j]->GetYaxis()->SetTitleOffset(1.15);
