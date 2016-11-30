@@ -117,7 +117,8 @@ int main(int argc, char* argv[]) {
   for (int treeStep = 0; treeStep < treeSize; treeStep++) {
     muonTree->GetEntry(treeStep);
     ///////////////////////////Find VEM /////////////////////////////////////////
-
+    cout << treeStep << endl;
+    if (treeStep!=2337) {
     TF1 *fit = findVem(muonHist);
     if(fit == NULL){
       didNotPlot.push_back(treeStep);
@@ -135,10 +136,11 @@ int main(int argc, char* argv[]) {
     vemBranch->Fill();
     vemErrorBranch->Fill();
   }
+  }
 
   // overwrite the muon tree to include the new data
   muonTree->Write("", TObject::kOverwrite);
-  
+  TCanvas *canvas = new TCanvas();
   errPlot->SetTitle("Errors");
   errPlot->SetMarkerStyle(20);
   errPlot->SetMarkerColor(kBlue);
@@ -203,6 +205,7 @@ TF1* findVem(TH1I* muonHistogram)
     count++;
     maxFitX=f1->GetMaximumX();
   }
+  
   return f1;
 }
 
@@ -220,6 +223,6 @@ float findVemError(TF1* fit) {
   float dxdb = -1/(2 * a);
   float varianceX = pow(dxda*aerr, 2) + pow(dxdb * berr, 2);
   float stdDevX = sqrt(varianceX);
-  //cout << stdDevX << endl;
+  
   return stdDevX;
 }
