@@ -27,3 +27,9 @@
 *.exe
 *.out
 *.app
+
+#Other
+muonData/*
+*.root
+MHFB
+MHV
