@@ -28,6 +28,7 @@
 using namespace std;
 
 TF1* findVem(TH1I*);
+TF1* findVemMultBinsTest(TH1I*);
 float findVemError(TF1*);
 
 
@@ -131,7 +132,7 @@ int main(int argc, char* argv[]) {
     muonHistVemError = error;
     
     errPlot->SetPoint(point, point, muonHistVem);
-    errPlot->SetPointError(point, 0 , error);
+    //errPlot->SetPointError(point, 0 , error);
     //////////////////////////////////////////////////////////////////////////////
     point++;
     // fill the branches with the computed VEM and error values.    
@@ -170,6 +171,7 @@ int main(int argc, char* argv[]) {
 
 }
 
+
 TF1* findVem(TH1I* muonHistogram) 
 {
   //Search for peaks
@@ -207,6 +209,137 @@ TF1* findVem(TH1I* muonHistogram)
   
   return f1;
 }
+
+TF1* findVemMultBinsTest(TH1I* muonHistogram) 
+{
+  //Search for peaks
+  // muonHistogram->Rebin(5);
+  TSpectrum *spec = new TSpectrum(2);
+  spec->Search(muonHistogram, 3, "nobackground", 0.5);
+  float* xArray = spec->GetPositionX();
+  float spectrumX = *max_element(xArray, xArray+2);
+  
+  //Fit around the second peak
+  TF1 *f1 = new TF1("f1", "pol2", spectrumX-65, spectrumX+65);
+  muonHistogram->Fit("f1","Rq");
+
+  double maxFitX=f1->GetMaximumX();
+  TH1I *muonHistCopy = (TH1I*)muonHistogram->Clone("muonHistCopy");
+
+  // TF1 *bestFit = f1;
+  TF1 *bestFit = (TF1*)f1->Clone("bestFit");
+  int bestThreashold = -1;
+  int threashold = 0;
+  int bestBin = 0;
+
+  for( int bin = 3; bin <=8; bin++){
+
+    //rebin the histogram
+    muonHistCopy = (TH1I*)muonHistogram->Clone("muonHistCopy");
+    muonHistCopy->Rebin(bin);
+    TSpectrum *spec = new TSpectrum(2);
+    spec->Search(muonHistCopy, 3, "nobackground", 0.5);
+    float* xArray = spec->GetPositionX();
+    float spectrumX = *max_element(xArray, xArray+2);
+
+
+    bool keepFitting = true;
+    bool successfulFit = false;
+    int count=1;
+    while(keepFitting)
+    {
+
+      f1 = new TF1("f1", "pol2", maxFitX-65, maxFitX+65);
+      muonHistCopy->Fit("f1","Rq");
+      threashold = abs(maxFitX - f1->GetMaximumX());
+      if( threashold <= bin){//Play with threshhold
+        keepFitting = false;
+        successfulFit = true;
+        //cout << "Fit stabilized after " << count << " iteration(s)." << endl;
+      }
+      else if(count > 20) {
+        //cout << "Fit never stabilized, used 20 iterations for fit" << endl;
+        //cout << abs(maxFitX - f1->GetMaximumX()) << endl;
+        keepFitting=false;
+      }
+      count++;
+
+      maxFitX=f1->GetMaximumX();
+    }
+
+    //cout << threashold << " ";
+    if (successfulFit){
+      //cout << endl;
+      return f1;
+    }
+    // cout << threashold << " ";
+
+  }
+
+  cout << threashold << " NO SUCCESS" << endl;
+    
+  return NULL;
+}
+
+// TF1* findVemMultBins(TH1I* muonHistogram) 
+// {
+//   //Search for peaks
+//   //muonHistogram->Rebin(5);
+//   TSpectrum *spec = new TSpectrum(2);
+//   spec->Search(muonHistogram, 3, "nobackground", 0.5);
+//   float* xArray = spec->GetPositionX();
+//   float spectrumX = *max_element(xArray, xArray+2);
+  
+//   //Fit around the second peak
+//   TF1 *f1 = new TF1("f1", "pol2", spectrumX-65, spectrumX+65);
+//   muonHistogram->Fit("f1","Rq");
+
+//   double maxFitX=f1->GetMaximumX();
+
+
+//   // rebin several times
+//   int bestThreashold = -1;
+//   int threashold = 0;
+//   TF1 *bestFit = new TF1
+  
+//   for (int bin = 3; bin<=8; bin++){
+
+    // TH1I *muonHistCopy = (TH1I*)muonHistogram->Clone("muonHistCopy");
+//     muonHistCopy->Rebin(bin);
+
+//     bool keepFitting = true;
+//     int count=1;
+//     while(keepFitting)
+//     {
+
+//       f1 = new TF1("f1", "pol2", maxFitX-65, maxFitX+65);
+//       muonHistCopy->Fit("f1","Rq");
+
+//       threashold = abs(maxFitX - f1->GetMaximumX());
+//       if(threashold <= bin){//Play with threshhold
+//         keepFitting = false;
+//         //cout << "Fit stabilized after " << count << " iteration(s)." << endl;
+//       }
+//       else if(count > 20) {
+//         //cout << "Fit never stabilized, used 20 iterations for fit" << endl;
+//         //cout << abs(maxFitX - f1->GetMaximumX()) << endl;
+//         break;
+//       }
+//       count++;
+
+//       maxFitX=f1->GetMaximumX();
+//     }
+
+//     if( (threashold < bestThreashold or bestThreashold == -1) and count <= 20){
+//         bestThreashold = threashold;
+
+//         cout << bestThreashold << " ";
+//       }
+//   }
+//   cout << endl;
+  
+//   return f1;
+// }
 
 float findVemError(TF1* fit) {
   //Output parameters
