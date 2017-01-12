@@ -126,9 +126,12 @@ int main(int argc, char* argv[]) {
       didNotPlot.push_back(treeStep);
       continue;
     }
-    muonHistVem = fit->GetMaximumX();
-    float error = findVemError(fit);
+    muonHistVem = round(fit->GetMaximumX());
+    float error = muonHist->GetBinError(muonHistVem);
+    //float error = findVemError(fit);
     muonHistVemError = error;
+    cout << muonHistVem << endl;
+    cout << error << endl;
     
     errPlot->SetPoint(point, point, muonHistVem);
     errPlot->SetPointError(point, 0 , error);
