@@ -36,3 +36,8 @@ MHV
 muonHistVEM
 muonHistFromBinary
 failedIndexes.txt
+
+#dense ring
+DenseRingSimulationsASCII/lg*
+DenseRingSimulationsASCII/ReadData
+DenseRingSimulationsASCII/*.png
