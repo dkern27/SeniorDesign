@@ -127,15 +127,15 @@ int main(int argc, char* argv[]) {
       didNotPlot.push_back(treeStep);
       continue;
     }
-    muonHistVem = round(fit->GetMaximumX());
+    muonHistVem = fit->GetMaximumX();
     float error = muonHist->GetBinError(muonHistVem);
     //float error = findVemError(fit);
     muonHistVemError = error;
-    cout << muonHistVem << endl;
-    cout << error << endl;
+    // cout << muonHistVem << endl;
+    // cout << error << endl;
     
     errPlot->SetPoint(point, point, muonHistVem);
-    //errPlot->SetPointError(point, 0 , error);
+    errPlot->SetPointError(point, 0 , error);
     //////////////////////////////////////////////////////////////////////////////
     point++;
     // fill the branches with the computed VEM and error values.    
@@ -150,6 +150,7 @@ int main(int argc, char* argv[]) {
   errPlot->SetTitle("Errors");
   errPlot->SetMarkerStyle(20);
   errPlot->SetMarkerColor(kBlue);
+  errPlot->SetMinimum(0);
   errPlot->Draw("AP");
   errPlot->Fit("pol0");
 
@@ -180,7 +181,7 @@ TF1* findVem(TH1I* muonHistogram)
   //Search for peaks
   muonHistogram->Rebin(5);
   TSpectrum *spec = new TSpectrum(2);
-  spec->Search(muonHistogram, 3, "nobackground", 0.5);
+  spec->Search(muonHistogram, 3, "nobackground", 0.25);
   float* xArray = spec->GetPositionX();
   float spectrumX = *max_element(xArray, xArray+2);
   

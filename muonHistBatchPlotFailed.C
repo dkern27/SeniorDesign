@@ -2,7 +2,7 @@
 
 using namespace std;
 
-muonHistBatchPlotFailed(string fileName, string rootFile, bool showFit=false)
+muonHistBatchPlotFailed(string fileName, bool showFit=false)
 {
   cout << fileName << endl;
   ifstream file(fileName.c_str(), ios_base::in);
@@ -28,10 +28,10 @@ muonHistBatchPlotFailed(string fileName, string rootFile, bool showFit=false)
   gStyle->SetPalette(1,0); 
 
   // open the root file where the muon histograms are stored
-  TFile *f = new TFile("muons2014.root");
+  TFile *f = new TFile("muonsUpToAug2016.root");
   
   //limit the number of histograms to attempt to plot
-   const int maxPlot = 25; 
+   const int maxPlot = 10; 
 
   // grab the root tree from where it was stored intthe root file
   TTree *muonTree = (TTree*)f->Get("muonTree");
