@@ -50,88 +50,146 @@ main(int argc, char **argv) // argc = number arguments, argv = array containing 
                             // has argc = 3.
 
   // Check if the user specified what files to analyse
-  if (argc < 2) {
-    usage();
-    return 1;
-  }
+	if (argc < 2) {
+		usage();
+		return 1;
+	}
 
   // Makes your plots look "normal". The default background isn't plain white.
   //gROOT->Reset();
-  gROOT->SetStyle("Plain");
+	gROOT->SetStyle("Plain");
   // This makes all plots drawn have X and Y grid lines.
-  gStyle->SetPadGridX(true);
-  gStyle->SetPadGridY(true);
+	gStyle->SetPadGridX(true);
+	gStyle->SetPadGridY(true);
 
   // Declare plots here
 
-  TGraph *mip_vem_all = new TGraph();
-  mip_vem_all->SetMarkerStyle(20);
-  mip_vem_all->SetMarkerColor(kRed);
+	//Grouped by energy
+	TGraph *mip_vem_all = new TGraph();
+	mip_vem_all->SetMarkerStyle(20);
+	mip_vem_all->SetMarkerSize(1);
+	mip_vem_all->SetMarkerColor(kRed);
 
-  TGraph *mip_vem_200 = new TGraph();
-  mip_vem_200->SetMarkerStyle(20);
-  mip_vem_200->SetMarkerColor(kGreen);
+	TGraph *mip_vem_186 = new TGraph();
+	mip_vem_186->SetMarkerStyle(20);
+	mip_vem_186->SetMarkerSize(0.8);
+	mip_vem_186->SetMarkerColor(kBlue);
 
+	TGraph *mip_vem_190 = new TGraph();
+	mip_vem_190->SetMarkerStyle(20);
+	mip_vem_190->SetMarkerSize(0.6);
+	mip_vem_190->SetMarkerColor(kYellow);
+
+	TGraph *mip_vem_195 = new TGraph();
+	mip_vem_195->SetMarkerStyle(20);
+	mip_vem_195->SetMarkerSize(0.4);
+	mip_vem_195->SetMarkerColor(kCyan);
+
+	TGraph *mip_vem_200 = new TGraph();
+	mip_vem_200->SetMarkerStyle(20);
+	mip_vem_200->SetMarkerSize(0.2);
+	mip_vem_200->SetMarkerColor(kGreen);
+
+
+	//Grouped by angle
+		TGraph *mip_vem_alla = new TGraph();
+	mip_vem_alla->SetMarkerStyle(20);
+	mip_vem_alla->SetMarkerSize(1);
+	mip_vem_alla->SetMarkerColor(kRed);
+
+	TGraph *mip_vem_186a = new TGraph();
+	mip_vem_186a->SetMarkerStyle(20);
+	mip_vem_186a->SetMarkerSize(0.8);
+	mip_vem_186a->SetMarkerColor(kBlue);
+
+	TGraph *mip_vem_190 = new TGraph();
+	mip_vem_190a->SetMarkerStyle(20);
+	mip_vem_190a->SetMarkerSize(0.6);
+	mip_vem_190a->SetMarkerColor(kYellow);
+
+	TGraph *mip_vem_195a = new TGraph();
+	mip_vem_195a->SetMarkerStyle(20);
+	mip_vem_195a->SetMarkerSize(0.4);
+	mip_vem_195a->SetMarkerColor(kCyan);
+
+	TGraph *mip_vem_200a = new TGraph();
+	mip_vem_200a->SetMarkerStyle(20);
+	mip_vem_200a->SetMarkerSize(0.2);
+	mip_vem_200a->SetMarkerColor(kGreen);
   // -------------------
 
-  ifstream input_file;
-  string line, file;
+	ifstream input_file;
+	string line, file;
 
-  int station_id, scin_sat_status, wcd_sat_status;
-  double r_mc;
-  double scint_tot, scin_em, scin_mu;
-  double wcd_tot, wcd_em, wcd_mu;
+	int station_id, scin_sat_status, wcd_sat_status;
+	double r_mc;
+	double scint_tot, scin_em, scin_mu;
+	double wcd_tot, wcd_em, wcd_mu;
 
-  double energy, theta;
+	double energy, theta;
 
-  int index_all=0, index_200=0;
+	int index_all=0, index_186=0, index_190=0, index_195=0, index_200=0, index_alla=0, index_186a=0, index_190a=0, index_195a=0, index_200a=0;
 
   // ----------------------------------------------------------------------
   // Loop over files
   // read the file as the second to last argument
-  for (int iFile = 1; iFile <= argc - 1; iFile++) {
+	for (int iFile = 1; iFile <= argc - 1; iFile++) {
 
-    input_file.open(argv[iFile]);
+		input_file.open(argv[iFile]);
 
-    file = argv[iFile];
+		file = argv[iFile];
 
     // Fetching energy (from lgenergyXX.XX)
-    string::size_type e = file.find('y');
-    string::size_type ee = file.find('/');
-    stringstream(file.substr(e+1,ee-e-1))>>energy;
+		string::size_type e = file.find('y');
+		string::size_type ee = file.find('/');
+		stringstream(file.substr(e+1,ee-e-1))>>energy;
 
     // Fetching theta (from thetaXX)
-    string::size_type t = file.find('a');
-    string::size_type tt = file.find('/');
-    stringstream(file.substr(t+1,tt-t-1))>>theta;
+		string::size_type t = file.find('a');
+		string::size_type tt = file.find('/');
+		stringstream(file.substr(t+1,tt-t-1))>>theta;
 
-    cout << "reading file: " << file << " Log(E/eV)= " << energy << " Zenith angle (Deg)= " << theta << endl;
+		cout << "reading file: " << file << " Log(E/eV)= " << energy << " Zenith angle (Deg)= " << theta << endl;
 
     // First line is made of headers - ignoring  
-    getline(input_file,line);
+		getline(input_file,line);
 
-    while (input_file) {
-      input_file >> station_id >> r_mc
-      >> scint_tot >> scin_em >> scin_mu 
-      >> wcd_tot >> wcd_em >> wcd_mu
-      >> scin_sat_status >> wcd_sat_status;
-      
-      if (theta==0.0) {
+		while (input_file) {
+			input_file >> station_id >> r_mc
+			>> scint_tot >> scin_em >> scin_mu 
+			>> wcd_tot >> wcd_em >> wcd_mu
+			>> scin_sat_status >> wcd_sat_status;
 
-       mip_vem_all->SetPoint(index_all,wcd_tot,scint_tot);
-       index_all++;
+			if (theta==53.0) {
+				mip_vem_all->SetPoint(index_all,wcd_tot,scint_tot);
+				index_all++;
 
-       if (energy==19.50) 
-       {
-         mip_vem_200->SetPoint(index_200,wcd_tot,scint_tot);
-         index_200++;
-       }
-     }
-   }
+				if (energy==18.60) 
+				{
+					mip_vem_186->SetPoint(index_186,wcd_tot,scint_tot);
+					index_186++;
+				}
+				if (energy==19.00) 
+				{
+					mip_vem_190->SetPoint(index_190,wcd_tot,scint_tot);
+					index_190++;
+				}
+				if (energy==19.50) 
+				{
+					mip_vem_195->SetPoint(index_195,wcd_tot,scint_tot);
+					index_195++;
+				}
+				if (energy==20.00) 
+				{
+					mip_vem_200->SetPoint(index_200,wcd_tot,scint_tot);
+					index_200++;
+				}
+			}
+		}
 
-   input_file.close();
+		input_file.close();
 
- }
+	}
 
   // ----------------------------------------------------------------------
   // If you want to draw any plots do the screen, you first need to declare a TApplication,
@@ -142,28 +200,31 @@ main(int argc, char **argv) // argc = number arguments, argv = array containing 
   // do anything with them (like in this code), declare your TApplication afterwards. Otherwise it
   // can be initialised right at the start of main().
 
- TApplication theApp("app", &argc, argv);  
- printf("Complete.\n");
+	TApplication theApp("app", &argc, argv);  
+	printf("Complete.\n");
 
- gStyle->SetPalette(1);
+	gStyle->SetPalette(1);
 
- TCanvas *c = new TCanvas();
- mip_vem_all->Draw("AP");
- mip_vem_all->GetXaxis()->SetTitle("WCD [VEM]");
- mip_vem_all->GetYaxis()->SetTitle("SSD [MIP]");
- mip_vem_200->Draw("Psame");
- mip_vem_all->Fit("pol1");
- c->Update();
+	TCanvas *c = new TCanvas();
+	//mip_vem_all->Draw("AP");
+	//mip_vem_all->GetXaxis()->SetTitle("WCD [VEM]");
+	//mip_vem_all->GetYaxis()->SetTitle("SSD [MIP]");
+	mip_vem_200->Draw("AP");
+	mip_vem_195->Draw("Psame");
+	mip_vem_190->Draw("Psame");
+	mip_vem_186->Draw("PSame");
+	//mip_vem_all->Fit("pol1");
+	c->Update();
 
- theApp.Run();
+	theApp.Run();
 
- return 0;
+	return 0;
 
 }
 
 void
 usage()
 {
-  printf("Usage:\n"
-    "Describe here \n");
+	printf("Usage:\n"
+		"Describe here \n");
 }
