@@ -263,7 +263,7 @@ main(int argc, char **argv) // argc = number arguments, argv = array containing 
 	mip_vem_195->Draw("Psame");
 	mip_vem_190->Draw("Psame");
 	mip_vem_186->Draw("PSame");
-	mip_vem_all->Fit("pol2");
+	mip_vem_all->Fit("pol1");
 	c->Update();
 
   TCanvas *c2 = new TCanvas();
@@ -273,6 +273,7 @@ main(int argc, char **argv) // argc = number arguments, argv = array containing 
   mip_vem_36a->Draw("PSame");
   mip_vem_45a->Draw("PSame");
   mip_vem_53a->Draw("PSame");
+  mip_vem_alla->Fit("pol1");
   c2->Update();
 
 	theApp.Run();
