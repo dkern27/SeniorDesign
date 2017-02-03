@@ -41,3 +41,4 @@ failedIndexes.txt
 DenseRingSimulationsASCII/lg*
 DenseRingSimulationsASCII/ReadData
 DenseRingSimulationsASCII/*.png
+DenseRingSimulationsASCII/*.pdf
