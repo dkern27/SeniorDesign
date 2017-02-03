@@ -92,31 +92,41 @@ main(int argc, char **argv) // argc = number arguments, argv = array containing 
 
 
 	//Grouped by angle
-		TGraph *mip_vem_alla = new TGraph();
+	TGraph *mip_vem_alla = new TGraph();
 	mip_vem_alla->SetMarkerStyle(20);
-	mip_vem_alla->SetMarkerSize(1);
+	mip_vem_alla->SetMarkerSize(0.4);
 	mip_vem_alla->SetMarkerColor(kRed);
 
-	TGraph *mip_vem_186a = new TGraph();
-	mip_vem_186a->SetMarkerStyle(20);
-	mip_vem_186a->SetMarkerSize(0.8);
-	mip_vem_186a->SetMarkerColor(kBlue);
+	TGraph *mip_vem_00a = new TGraph();
+	mip_vem_00a->SetMarkerStyle(20);
+	mip_vem_00a->SetMarkerSize(0.4);
+	mip_vem_00a->SetMarkerColor(kBlue);
 
-	TGraph *mip_vem_190 = new TGraph();
-	mip_vem_190a->SetMarkerStyle(20);
-	mip_vem_190a->SetMarkerSize(0.6);
-	mip_vem_190a->SetMarkerColor(kYellow);
+	TGraph *mip_vem_12a = new TGraph();
+	mip_vem_12a->SetMarkerStyle(20);
+	mip_vem_12a->SetMarkerSize(0.4);
+	mip_vem_12a->SetMarkerColor(kYellow);
 
-	TGraph *mip_vem_195a = new TGraph();
-	mip_vem_195a->SetMarkerStyle(20);
-	mip_vem_195a->SetMarkerSize(0.4);
-	mip_vem_195a->SetMarkerColor(kCyan);
+	TGraph *mip_vem_25a = new TGraph();
+	mip_vem_25a->SetMarkerStyle(20);
+	mip_vem_25a->SetMarkerSize(0.4);
+	mip_vem_25a->SetMarkerColor(kCyan);
 
-	TGraph *mip_vem_200a = new TGraph();
-	mip_vem_200a->SetMarkerStyle(20);
-	mip_vem_200a->SetMarkerSize(0.2);
-	mip_vem_200a->SetMarkerColor(kGreen);
-  // -------------------
+  TGraph *mip_vem_36a = new TGraph();
+  mip_vem_36a->SetMarkerStyle(20);
+  mip_vem_36a->SetMarkerSize(0.4);
+  mip_vem_36a->SetMarkerColor(kGreen);
+
+  TGraph *mip_vem_45a = new TGraph();
+  mip_vem_45a->SetMarkerStyle(20);
+  mip_vem_45a->SetMarkerSize(0.4);
+  mip_vem_45a->SetMarkerColor(kOrange);
+
+  TGraph *mip_vem_53a = new TGraph();
+  mip_vem_53a->SetMarkerStyle(20);
+  mip_vem_53a->SetMarkerSize(0.4);
+  mip_vem_53a->SetMarkerColor(kViolet);
+ //  // -------------------
 
 	ifstream input_file;
 	string line, file;
@@ -128,7 +138,9 @@ main(int argc, char **argv) // argc = number arguments, argv = array containing 
 
 	double energy, theta;
 
-	int index_all=0, index_186=0, index_190=0, index_195=0, index_200=0, index_alla=0, index_186a=0, index_190a=0, index_195a=0, index_200a=0;
+	int index_all=0, index_186=0, index_190=0, index_195=0, index_200=0, index_alla=0, index_00a=0, index_12a=0,
+  index_25a=0, index_36a=0, index_45a=0, index_53a=0;
+
 
   // ----------------------------------------------------------------------
   // Loop over files
@@ -153,6 +165,7 @@ main(int argc, char **argv) // argc = number arguments, argv = array containing 
 
     // First line is made of headers - ignoring  
 		getline(input_file,line);
+
 
 		while (input_file) {
 			input_file >> station_id >> r_mc
@@ -184,6 +197,43 @@ main(int argc, char **argv) // argc = number arguments, argv = array containing 
 					mip_vem_200->SetPoint(index_200,wcd_tot,scint_tot);
 					index_200++;
 				}
+      }
+
+      if (energy==20.00) {
+        mip_vem_alla->SetPoint(index_alla,wcd_tot,scint_tot);
+        index_alla++;
+
+        if (theta==00) 
+        {
+          mip_vem_00a->SetPoint(index_00a,wcd_tot,scint_tot);
+          index_00a++;
+        }
+        if (theta==12) 
+        {
+          mip_vem_12a->SetPoint(index_12a,wcd_tot,scint_tot);
+          index_12a++;
+        }
+        if (theta==25) 
+        {
+          mip_vem_25a->SetPoint(index_25a,wcd_tot,scint_tot);
+          index_25a++;
+        }
+        if (theta==36) 
+        {
+          mip_vem_36a->SetPoint(index_36a,wcd_tot,scint_tot);
+          index_36a++;
+        }
+        if (theta==45) 
+        {
+          mip_vem_45a->SetPoint(index_45a,wcd_tot,scint_tot);
+          index_45a++;
+        }
+        if (theta==53) 
+        {
+          mip_vem_53a->SetPoint(index_53a,wcd_tot,scint_tot);
+          index_53a++;
+        }
+
 			}
 		}
 
@@ -215,6 +265,15 @@ main(int argc, char **argv) // argc = number arguments, argv = array containing 
 	mip_vem_186->Draw("PSame");
 	//mip_vem_all->Fit("pol1");
 	c->Update();
+
+  TCanvas *c2 = new TCanvas();
+  mip_vem_00a->Draw("AP");
+  mip_vem_12a->Draw("Psame");
+  mip_vem_25a->Draw("Psame");
+  mip_vem_36a->Draw("PSame");
+  mip_vem_45a->Draw("PSame");
+  mip_vem_53a->Draw("PSame");
+  c2->Update();
 
 	theApp.Run();
 
