@@ -250,20 +250,20 @@ main(int argc, char **argv) // argc = number arguments, argv = array containing 
   // do anything with them (like in this code), declare your TApplication afterwards. Otherwise it
   // can be initialised right at the start of main().
 
-	TApplication theApp("app", &argc, argv);  
+	TApplication theApp("app", &argc, argv);
 	printf("Complete.\n");
 
 	gStyle->SetPalette(1);
 
 	TCanvas *c = new TCanvas();
-	//mip_vem_all->Draw("AP");
-	//mip_vem_all->GetXaxis()->SetTitle("WCD [VEM]");
-	//mip_vem_all->GetYaxis()->SetTitle("SSD [MIP]");
-	mip_vem_200->Draw("AP");
+	mip_vem_all->Draw("AP");
+	mip_vem_all->GetXaxis()->SetTitle("WCD [VEM]");
+	mip_vem_all->GetYaxis()->SetTitle("SSD [MIP]");
+	mip_vem_200->Draw("Psame");
 	mip_vem_195->Draw("Psame");
 	mip_vem_190->Draw("Psame");
 	mip_vem_186->Draw("PSame");
-	//mip_vem_all->Fit("pol1");
+	mip_vem_all->Fit("pol2");
 	c->Update();
 
   TCanvas *c2 = new TCanvas();
