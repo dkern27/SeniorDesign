@@ -17,6 +17,7 @@
 #include "TProfile.h" // Profile plot - useful for plotting the *mean* of one variable against another
 #include "TFile.h"
 #include "TVector3.h"
+#include "TLegend.h"
 
 // Generic ROOT files, always include these
 #include "TMath.h"
@@ -177,7 +178,7 @@ main(int argc, char **argv) // argc = number arguments, argv = array containing 
 				double phi = atan(20000/((20000/tan(theta * TMath::Pi()/180)) - r_mc/sin(theta * TMath::Pi()/180)));
 				scint_tot = scint_tot / abs(cos(phi));
 			}
-			//if (theta==53.0) {
+			if (theta==53) {
 				mip_vem_all->SetPoint(index_all,wcd_tot,scint_tot);
 				index_all++;
 
@@ -201,7 +202,7 @@ main(int argc, char **argv) // argc = number arguments, argv = array containing 
 					mip_vem_200->SetPoint(index_200,wcd_tot,scint_tot);
 					index_200++;
 				}
-			//}
+			}
 
 			if (energy==20.00) {
 				mip_vem_alla->SetPoint(index_alla,wcd_tot,scint_tot);
@@ -268,6 +269,15 @@ main(int argc, char **argv) // argc = number arguments, argv = array containing 
 	mip_vem_190->Draw("Psame");
 	mip_vem_186->Draw("PSame");
 	mip_vem_all->Fit("pol1");
+
+	TLegend* leg = new TLegend(0.1,0.7,0.48,0.9);
+    leg->AddEntry(mip_vem_all,"All Energies","p");
+    leg->AddEntry(mip_vem_186,"18.6","p");
+    leg->AddEntry(mip_vem_190,"19.0","p");
+    leg->AddEntry(mip_vem_195,"19.5","p");
+    leg->AddEntry(mip_vem_200,"20.0","p");
+    leg->Draw("PSame");
+
 	c->Update();
 
 
