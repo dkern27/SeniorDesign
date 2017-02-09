@@ -141,7 +141,6 @@ int main(int argc, char* argv[]) {
     // fill the branches with the computed VEM and error values.    
     vemBranch->Fill();
     vemErrorBranch->Fill();
-  
   }
 
   // overwrite the muon tree to include the new data
@@ -167,12 +166,9 @@ int main(int argc, char* argv[]) {
   //f.Close();
   theApp.Run();
   cout << "TFile written to " << fileName << endl;
-
-
   
   // if you want the program to exit to a root interpreter, leaving plots open, etc. don't 
   // close the root file, and insteda use 'theApp.Run()' at the end of the program.
-
 }
 
 
@@ -180,10 +176,10 @@ TF1* findVem(TH1I* muonHistogram)
 {
   //Search for peaks
   muonHistogram->Rebin(5);
-  TSpectrum *spec = new TSpectrum(2);
+  TSpectrum *spec = new TSpectrum(3);
   spec->Search(muonHistogram, 3, "nobackground", 0.25);
   float* xArray = spec->GetPositionX();
-  float spectrumX = *max_element(xArray, xArray+2);
+  float spectrumX = *max_element(xArray, xArray+3);
   
   //Fit around the second peak
   TF1 *f1 = new TF1("f1", "pol2", spectrumX-65, spectrumX+65);
@@ -219,7 +215,7 @@ TF1* findVemMultBinsTest(TH1I* muonHistogram)
   //Search for peaks
   // muonHistogram->Rebin(5);
   TSpectrum *spec = new TSpectrum(2);
-  spec->Search(muonHistogram, 3, "nobackground", 0.5);
+  spec->Search(muonHistogram, 3, "nobackground", 0.2);
   float* xArray = spec->GetPositionX();
   float spectrumX = *max_element(xArray, xArray+2);
   

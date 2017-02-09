@@ -161,7 +161,7 @@ main(int argc, char **argv) // argc = number arguments, argv = array containing 
 		string::size_type tt = file.find('/');
 		stringstream(file.substr(t+1,tt-t-1))>>theta;
 
-		cout << "reading file: " << file << " Log(E/eV)= " << energy << " Zenith angle (Deg)= " << theta << endl;
+		//cout << "reading file: " << file << " Log(E/eV)= " << energy << " Zenith angle (Deg)= " << theta << endl;
 
     // First line is made of headers - ignoring  
 		getline(input_file,line);
@@ -172,8 +172,12 @@ main(int argc, char **argv) // argc = number arguments, argv = array containing 
 			>> scint_tot >> scin_em >> scin_mu 
 			>> wcd_tot >> wcd_em >> wcd_mu
 			>> scin_sat_status >> wcd_sat_status;
-
-			if (theta==53.0) {
+			if(theta != 0)
+			{
+				double phi = atan(20000/((20000/tan(theta * TMath::Pi()/180)) - r_mc/sin(theta * TMath::Pi()/180)));
+				scint_tot = scint_tot / abs(cos(phi));
+			}
+			//if (theta==53.0) {
 				mip_vem_all->SetPoint(index_all,wcd_tot,scint_tot);
 				index_all++;
 
@@ -197,42 +201,42 @@ main(int argc, char **argv) // argc = number arguments, argv = array containing 
 					mip_vem_200->SetPoint(index_200,wcd_tot,scint_tot);
 					index_200++;
 				}
-      }
+			//}
 
-      if (energy==20.00) {
-        mip_vem_alla->SetPoint(index_alla,wcd_tot,scint_tot);
-        index_alla++;
+			if (energy==20.00) {
+				mip_vem_alla->SetPoint(index_alla,wcd_tot,scint_tot);
+				index_alla++;
 
-        if (theta==00) 
-        {
-          mip_vem_00a->SetPoint(index_00a,wcd_tot,scint_tot);
-          index_00a++;
-        }
-        if (theta==12) 
-        {
-          mip_vem_12a->SetPoint(index_12a,wcd_tot,scint_tot);
-          index_12a++;
-        }
-        if (theta==25) 
-        {
-          mip_vem_25a->SetPoint(index_25a,wcd_tot,scint_tot);
-          index_25a++;
-        }
-        if (theta==36) 
-        {
-          mip_vem_36a->SetPoint(index_36a,wcd_tot,scint_tot);
-          index_36a++;
-        }
-        if (theta==45) 
-        {
-          mip_vem_45a->SetPoint(index_45a,wcd_tot,scint_tot);
-          index_45a++;
-        }
-        if (theta==53) 
-        {
-          mip_vem_53a->SetPoint(index_53a,wcd_tot,scint_tot);
-          index_53a++;
-        }
+				if (theta==00) 
+				{
+					mip_vem_00a->SetPoint(index_00a,wcd_tot,scint_tot);
+					index_00a++;
+				}
+				if (theta==12) 
+				{
+					mip_vem_12a->SetPoint(index_12a,wcd_tot,scint_tot);
+					index_12a++;
+				}
+				if (theta==25) 
+				{
+					mip_vem_25a->SetPoint(index_25a,wcd_tot,scint_tot);
+					index_25a++;
+				}
+				if (theta==36) 
+				{
+					mip_vem_36a->SetPoint(index_36a,wcd_tot,scint_tot);
+					index_36a++;
+				}
+				if (theta==45) 
+				{
+					mip_vem_45a->SetPoint(index_45a,wcd_tot,scint_tot);
+					index_45a++;
+				}
+				if (theta==53) 
+				{
+					mip_vem_53a->SetPoint(index_53a,wcd_tot,scint_tot);
+					index_53a++;
+				}
 
 			}
 		}
@@ -266,15 +270,15 @@ main(int argc, char **argv) // argc = number arguments, argv = array containing 
 	mip_vem_all->Fit("pol1");
 	c->Update();
 
-  TCanvas *c2 = new TCanvas();
-  mip_vem_00a->Draw("AP");
-  mip_vem_12a->Draw("Psame");
-  mip_vem_25a->Draw("Psame");
-  mip_vem_36a->Draw("PSame");
-  mip_vem_45a->Draw("PSame");
-  mip_vem_53a->Draw("PSame");
-  mip_vem_alla->Fit("pol1");
-  c2->Update();
+
+  // TCanvas *c2 = new TCanvas();
+  // mip_vem_00a->Draw("AP");
+  // mip_vem_12a->Draw("Psame");
+  // mip_vem_25a->Draw("Psame");
+  // mip_vem_36a->Draw("PSame");
+  // mip_vem_45a->Draw("PSame");
+  // mip_vem_53a->Draw("PSame");
+  // c2->Update();
 
 	theApp.Run();
 
