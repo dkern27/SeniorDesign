@@ -40,12 +40,17 @@ struct DataPoint {
 	double angle;
 	double wcd_tot;
 	double scint_tot;
+	double corrected_scint_tot;
 };
 
 //Function Declarations
 void usage();
 vector<DataPoint> ReadFile(ifstream& input_file, string file);
-vector<double> doPlotsByAngle(vector<DataPoint>& data, double angle, vector<double> energies);
+vector<double> getFitSlopes(vector<DataPoint>& data, double angle, vector<double> energies);
+vector<double> getCorrectedFitSlopes(vector<DataPoint>& data, double angle, vector<double> energies);
+double doCorrectionOne(double scint_tot, double angle, double coreDistance, double height);
+double doCorrectionTwo(double scint_tot, double angle, double coreDistance, double height);
+
 
 //Global Variables
 
@@ -71,12 +76,16 @@ int main(int argc, char **argv)
 	//Remove stats box
 	gStyle->SetOptStat(0);
 
+	//Maybe get these values when we read the files?
 	vector<double> energies = {18.6, 19.0, 19.5, 20.0};
 	vector<double> angles = {0, 12, 25, 36, 45, 53};
 
 	//args: name, title, num_bins_x, min_x, max_x, num_bins_y, min_y, max_y
-	TH2F *slopes = new TH2F("slopes", "Slopes", 15, 18, 21, 30, 0, 60);
-	slopes->GetZaxis()->SetRangeUser(0.75, 1.1);
+	TH2F *fit_slopes = new TH2F("slopes", "Slopes", energies.size(), 0, energies.size(), angles.size(), 0, angles.size());
+	TH2F *corrected_fit_slopes = new TH2F("slopes", "Slopes", energies.size(), 0, energies.size(), angles.size(), 0, angles.size());
+	//Set according to range of z values
+	fit_slopes->GetZaxis()->SetRangeUser(0.75, 1.6);
+	corrected_fit_slopes->GetZaxis()->SetRangeUser(0.75, 1.6);
 
   // -------------------
 	vector<DataPoint> data;
@@ -112,21 +121,32 @@ int main(int argc, char **argv)
 	gStyle->SetPalette(1);
 
 	TCanvas *c = new TCanvas();
-
 	//Go through each angle and make a graph for each energy
 	for (int i = 0; i < angles.size(); i++)
 	{
-		vector<double> fit_slopes = doPlotsByAngle(data, angles[i], energies);
-		for (int j = 0; j < fit_slopes.size(); j++)
+		vector<double> slopes = getFitSlopes(data, angles[i], energies);
+		for (int j = 0; j < slopes.size(); j++)
 		{
-			cout << fit_slopes[j] << endl;
-			slopes->Fill(energies[j], angles[i], fit_slopes[j]);
+			cout << slopes[j] << endl;
+			fit_slopes->Fill(j, i, slopes[j]);
 		}
 	}
-
-	slopes->Draw("colz");
-
+	fit_slopes->Draw("colz");
 	c->Update();
+
+	TCanvas *c2 = new TCanvas();
+	//Go through each angle and make a graph for each energy
+	for (int i = 0; i < angles.size(); i++)
+	{
+		vector<double> corrected_slopes = getCorrectedFitSlopes(data, angles[i], energies);
+		for (int j = 0; j < corrected_slopes.size(); j++)
+		{
+			cout << corrected_slopes[j] << endl;
+			corrected_fit_slopes->Fill(j, i, corrected_slopes[j]);
+		}
+	}
+	corrected_fit_slopes->Draw("colz");
+	c2->Update();
 
 	theApp.Run();
 
@@ -181,7 +201,8 @@ vector<DataPoint> ReadFile(ifstream& input_file, string file)
 		>> wcd_tot >> wcd_em >> wcd_mu
 		>> scin_sat_status >> wcd_sat_status;
 
-		DataPoint newPoint = {energy, theta, wcd_tot, scint_tot};
+		//Using 20000 as height of shower axis
+		DataPoint newPoint = {energy, theta, wcd_tot, scint_tot, doCorrectionOne(scint_tot, theta, r_mc, 20000)};
 		data.push_back(newPoint);
 	}
 	return data;
@@ -194,7 +215,7 @@ params
 	double angle the angle to filter by
 	vector<double> energies the energies to filter by
 */
-vector<double> doPlotsByAngle(vector<DataPoint>& data, double angle, vector<double> energies)
+vector<double> getFitSlopes(vector<DataPoint>& data, double angle, vector<double> energies)
 {
 	vector<TGraph*> graphs;
 	//If we want a graph with all points
@@ -238,12 +259,80 @@ vector<double> doPlotsByAngle(vector<DataPoint>& data, double angle, vector<doub
 	}
 	//Fit each graph and get fit result
 	TF1 *fit = new TF1("fit","pol1",0,3000);
-	vector<double> fit_slopes;
+	vector<double> slopes;
 	for (TGraph* graph : graphs)
 	{
 		graph->Draw();
 		graph->Fit("fit", "q");
-		fit_slopes.push_back(fit->GetParameter(1));
+		slopes.push_back(fit->GetParameter(1));
 	}
-	return fit_slopes;
+	return slopes;
+}
+
+vector<double> getCorrectedFitSlopes(vector<DataPoint>& data, double angle, vector<double> energies)
+{
+	vector<TGraph*> graphs;
+	//If we want a graph with all points
+  	//graphs.push_back(new TGraph()); //All energies
+	for(int i = 0; i < energies.size(); i++)
+	{
+		graphs.push_back(new TGraph());
+	}
+
+	int indexes[4] = {0, 0, 0, 0};
+
+	//Filters into several graphs
+	for (DataPoint d : data)
+	{
+		if(d.angle == angle)
+		{
+			//graphs[0]->SetPointindexes[0], d.wcd_tot, d.scint_tot);
+			//indexes[0]++;
+			//This could be simplified with an int set in the if/else, then add to graph after
+			if (d.energy == energies[0])
+			{
+				graphs[0]->SetPoint(indexes[0], d.wcd_tot, d.corrected_scint_tot);
+				indexes[0]++;
+			}
+			else if (d.energy == energies[1])
+			{
+				graphs[1]->SetPoint(indexes[1], d.wcd_tot, d.corrected_scint_tot);
+				indexes[1]++;
+			}
+			else if (d.energy == energies[2])
+			{
+				graphs[2]->SetPoint(indexes[2], d.wcd_tot, d.corrected_scint_tot);
+				indexes[2]++;
+			}
+			else if (d.energy == energies[3])
+			{
+				graphs[3]->SetPoint(indexes[3], d.wcd_tot, d.corrected_scint_tot);
+				indexes[3]++;
+			}
+		}
+	}
+	//Fit each graph and get fit result
+	TF1 *fit = new TF1("fit","pol1",0,3000);
+	vector<double> slopes;
+	for (TGraph* graph : graphs)
+	{
+		graph->Draw();
+		graph->Fit("fit", "q");
+		slopes.push_back(fit->GetParameter(1));
+	}
+	return slopes;
+}
+
+double doCorrectionOne(double scint_tot, double angle, double coreDistance, double height)
+{
+	if(angle == 0) return scint_tot;
+	double phi = atan(height/((height/tan(angle * TMath::Pi()/180)) - coreDistance/sin(angle * TMath::Pi()/180)));
+	return scint_tot/abs(cos(phi));
+}
+
+double doCorrectionTwo(double scint_tot, double angle, double coreDistance, double height)
+{
+	if(angle == 0) return scint_tot;
+	double phi = atan(height/((height/tan(angle * TMath::Pi()/180)) + coreDistance/sin(angle * TMath::Pi()/180)));
+	return scint_tot/abs(cos(phi));
 }
