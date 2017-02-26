@@ -36,6 +36,7 @@ using namespace std; // So the compiler interprets cout as std::cout
 
 //struct used to hold data read in from file
 struct DataPoint {
+	double core_distance;
 	double energy;
 	double angle;
 	double wcd_tot;
@@ -46,6 +47,8 @@ struct DataPoint {
 //Function Declarations
 void usage();
 vector<DataPoint> ReadFile(ifstream& input_file, string file);
+vector<DataPoint> IDontKnowWhatToCallThis(vector<DataPoint>& data); //Hanna help
+TH2F* makeHistogram(vector<DataPoint>& data, vector<double> angles, vector<double> energies, bool corrected);
 vector<double> getFitSlopes(vector<DataPoint>& data, double angle, vector<double> energies);
 vector<double> getCorrectedFitSlopes(vector<DataPoint>& data, double angle, vector<double> energies);
 double doCorrectionOne(double scint_tot, double angle, double coreDistance, double height);
@@ -80,15 +83,9 @@ int main(int argc, char **argv)
 	vector<double> energies = {18.6, 19.0, 19.5, 20.0};
 	vector<double> angles = {0, 12, 25, 36, 45, 53};
 
-	//args: name, title, num_bins_x, min_x, max_x, num_bins_y, min_y, max_y
-	TH2F *fit_slopes = new TH2F("slopes", "Slopes", energies.size(), 0, energies.size(), angles.size(), 0, angles.size());
-	TH2F *corrected_fit_slopes = new TH2F("slopes", "Slopes", energies.size(), 0, energies.size(), angles.size(), 0, angles.size());
-	//Set according to range of z values
-	fit_slopes->GetZaxis()->SetRangeUser(0.75, 1.6);
-	corrected_fit_slopes->GetZaxis()->SetRangeUser(0.75, 1.6);
-
   // -------------------
 	vector<DataPoint> data;
+	vector<DataPoint> data2;
 	
   // ----------------------------------------------------------------------
   // Loop over files
@@ -103,7 +100,11 @@ int main(int argc, char **argv)
 
 		vector<DataPoint> newData = ReadFile(input_file, file);
 		input_file.close();
+
+		vector<DataPoint> newData2 = IDontKnowWhatToCallThis(newData);
+
 		data.insert(data.end(), newData.begin(), newData.end());
+		data2.insert(data2.end(), newData2.begin(), newData2.end());
 	}
 
   // ----------------------------------------------------------------------
@@ -121,38 +122,30 @@ int main(int argc, char **argv)
 	gStyle->SetPalette(1);
 
 	TCanvas *c = new TCanvas();
-	//Go through each angle and make a graph for each energy
-	for (int i = 0; i < angles.size(); i++)
-	{
-		vector<double> slopes = getFitSlopes(data, angles[i], energies);
-		for (int j = 0; j < slopes.size(); j++)
-		{
-			cout << slopes[j] << endl;
-			fit_slopes->Fill(j, i, slopes[j]);
-		}
-	}
+	TH2F* fit_slopes = makeHistogram(data, angles, energies, false);
+	fit_slopes->GetZaxis()->SetRangeUser(0.75, 1.6);
 	fit_slopes->Draw("colz");
 	c->Update();
-
+	
 	TCanvas *c2 = new TCanvas();
-	//Go through each angle and make a graph for each energy
-	for (int i = 0; i < angles.size(); i++)
-	{
-		vector<double> corrected_slopes = getCorrectedFitSlopes(data, angles[i], energies);
-		for (int j = 0; j < corrected_slopes.size(); j++)
-		{
-			cout << corrected_slopes[j] << endl;
-			corrected_fit_slopes->Fill(j, i, corrected_slopes[j]);
-		}
-	}
+	TH2F* corrected_fit_slopes = makeHistogram(data, angles, energies, true);
+	corrected_fit_slopes->GetZaxis()->SetRangeUser(0.75, 1.6);
 	corrected_fit_slopes->Draw("colz");
 	c2->Update();
+
+	TCanvas *c3 = new TCanvas();
+	TH2F* corrected_fit_slopes2 = makeHistogram(data2, angles, energies, true);
+	corrected_fit_slopes2->GetZaxis()->SetRangeUser(0.75, 1.6);
+	corrected_fit_slopes2->Draw("colz");
+	c3->Update();
 
 	theApp.Run();
 
 	return 0;
 
 }
+
+//////////////////////////////////////////// END OF MAIN ////////////////////////////////////////////
 
 //DO THIS LATER
 void usage()
@@ -202,10 +195,92 @@ vector<DataPoint> ReadFile(ifstream& input_file, string file)
 		>> scin_sat_status >> wcd_sat_status;
 
 		//Using 20000 as height of shower axis
-		DataPoint newPoint = {energy, theta, wcd_tot, scint_tot, doCorrectionOne(scint_tot, theta, r_mc, 20000)};
+		DataPoint newPoint = {r_mc, energy, theta, wcd_tot, scint_tot, doCorrectionOne(scint_tot, theta, r_mc, 20000)};
 		data.push_back(newPoint);
 	}
 	return data;
+}
+
+//I hate this function so much
+vector<DataPoint> IDontKnowWhatToCallThis(vector<DataPoint>& data)
+{
+	DataPoint max600 = {0,0,0,0,INT_MIN,0};
+	DataPoint min600 = {0,0,0,0,INT_MAX,0};
+	DataPoint max800 = {0,0,0,0,INT_MIN,0};
+	DataPoint min800 = {0,0,0,0,INT_MAX,0};
+	DataPoint max1000 = {0,0,0,0,INT_MIN,0};
+	DataPoint min1000 = {0,0,0,0,INT_MAX,0};
+	for(DataPoint d:data)
+	{
+		if(d.core_distance == 600)
+		{
+			if(d.scint_tot < min600.scint_tot)
+			{
+				min600 = d;
+			}
+			else if(d.scint_tot > max600.scint_tot)
+			{
+				max600 = d;
+			}
+		}
+		else if(d.core_distance == 800)
+		{
+			if(d.scint_tot < min800.scint_tot)
+			{
+				min800 = d;
+			}
+			else if(d.scint_tot > max800.scint_tot)
+			{
+				max800 = d;
+			}
+		}
+		else if(d.core_distance == 1000)
+		{
+			if(d.scint_tot < min1000.scint_tot)
+			{
+				min1000 = d;
+			}
+			else if(d.scint_tot > max1000.scint_tot)
+			{
+				max1000 = d;
+			}
+		}
+	}
+	min600.corrected_scint_tot = doCorrectionTwo(min600.scint_tot, min600.angle, min600.core_distance, 20000);
+	max600.corrected_scint_tot = doCorrectionOne(max600.scint_tot, max600.angle, max600.core_distance, 20000);
+	min800.corrected_scint_tot = doCorrectionTwo(min800.scint_tot, min800.angle, min800.core_distance, 20000);
+	max800.corrected_scint_tot = doCorrectionOne(max800.scint_tot, max800.angle, max800.core_distance, 20000);
+	min1000.corrected_scint_tot = doCorrectionTwo(min1000.scint_tot, min1000.angle, min1000.core_distance, 20000);
+	max1000.corrected_scint_tot = doCorrectionOne(max1000.scint_tot, max1000.angle, max1000.core_distance, 20000);
+	vector<DataPoint> otherData;
+	otherData.push_back(min600);
+	otherData.push_back(max600);
+	otherData.push_back(min800);
+	otherData.push_back(max800);
+	otherData.push_back(min1000);
+	otherData.push_back(max1000);
+	return otherData;
+}
+
+TH2F* makeHistogram(vector<DataPoint>& data, vector<double> angles, vector<double> energies, bool corrected)
+{
+	//args: name, title, num_bins_x, min_x, max_x, num_bins_y, min_y, max_y
+	TH2F *fit_slopes = new TH2F("slopes", "Slopes", energies.size(), 0, energies.size(), angles.size(), 0, angles.size());
+	for (int i = 0; i < angles.size(); i++)
+	{
+		vector<double> slopes;
+		if(!corrected)
+			slopes = getFitSlopes(data, angles[i], energies);
+		else
+			slopes = getCorrectedFitSlopes(data, angles[i], energies);
+
+		for (int j = 0; j < slopes.size(); j++)
+		{
+			cout << slopes[j] << endl;
+			fit_slopes->Fill(j, i, slopes[j]);
+		}
+	}
+	return fit_slopes;
 }
 
 /*
