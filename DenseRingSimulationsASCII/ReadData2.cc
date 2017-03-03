@@ -53,6 +53,8 @@ vector<double> getFitSlopes(vector<DataPoint>& data, double angle, vector<double
 vector<double> getCorrectedFitSlopes(vector<DataPoint>& data, double angle, vector<double> energies);
 double doCorrectionOne(double scint_tot, double angle, double coreDistance, double height);
 double doCorrectionTwo(double scint_tot, double angle, double coreDistance, double height);
+TGraph* plotData(vector<DataPoint>& data, double angle = -1, double energy = -1);
+vector<DataPoint> filterData(vector<DataPoint>& data, double angle, double energy);
 
 
 //Global Variables
@@ -262,6 +264,14 @@ vector<DataPoint> IDontKnowWhatToCallThis(vector<DataPoint>& data)
 	return otherData;
 }
 
+/*
+Makes a single histogram of fit slopes
+params
+	vector<DataPoint>& data All data to be filtered through
+	vector<double> angles : the angles to filter by
+	vector<double> energies : the energies to filter by
+	bool corrected : whether to use the corrected scint_tot or regular
+*/
 TH2F* makeHistogram(vector<DataPoint>& data, vector<double> angles, vector<double> energies, bool corrected)
 {
 	//args: name, title, num_bins_x, min_x, max_x, num_bins_y, min_y, max_y
@@ -344,6 +354,13 @@ vector<double> getFitSlopes(vector<DataPoint>& data, double angle, vector<double
 	return slopes;
 }
 
+/*
+Plots and fits data filtered by angle and energy using the corrected scint_tot
+params
+	vector<DataPoint>& data All data to be filtered through
+	double angle the angle to filter by
+	vector<double> energies the energies to filter by
+*/
 vector<double> getCorrectedFitSlopes(vector<DataPoint>& data, double angle, vector<double> energies)
 {
 	vector<TGraph*> graphs;
@@ -411,3 +428,69 @@ double doCorrectionTwo(double scint_tot, double angle, double coreDistance, doub
 	double phi = atan(height/((height/tan(angle * TMath::Pi()/180)) + coreDistance/sin(angle * TMath::Pi()/180)));
 	return scint_tot/abs(cos(phi));
 }
+
+/*
+Makes a single plot of the data wcd_tot vs scint_tot
+params
+	vector<DataPoint> data : the data to filter
+	double angle : the angle to filter by. Default is -1 if do not need to filter
+	double energy : the energy to filter by. Default is -1 if do not need to filter
+*/
+TGraph* plotData(vector<DataPoint>& data, double angle = -1, double energy = -1)
+{
+	TGraph* graph = new TGraph();
+	vector<DataPoint> dataToPlot = filterData(data, angle, energy);
+	int index = 0;
+	for (DataPoint d : dataToPlot)
+	{
+		graph->SetPoint(index, d.wcd_tot, d.scint_tot);
+		index++;
+	}
+	return graph;
+}
+
+/*
+Filters data by angle and/or energy. Used by plotData
+params
+	vector<DataPoint> data : the data to filter
+	double angle : the angle to filter by
+	double energy : the energy to filter by
+*/
+vector<DataPoint> filterData(vector<DataPoint>& data, double angle, double energy)
+{
+	vector<DataPoint> filteredData;
+	int index = 0;
+	for (DataPoint d : data)
+	{
+		if(angle == -1 && energy == -1)
+		{
+			filteredData.push_back(d);
+		}
+		else if (angle == -1)
+		{
+			if (d.energy == energy)
+			{
+				filteredData.push_back(d);
+			}
+		}
+		else if (energy == -1)
+		{
+			if (d.angle == angle)
+			{
+				filteredData.push_back(d);
+			}
+		}
+		else if (d.angle == angle && d.energy == energy)
+		{
+			filteredData.push_back(d);
+		}
+	}
+	return filteredData;
+}
+
+
+
+
+
+
+
