@@ -53,7 +53,7 @@ vector<double> getFitSlopes(vector<DataPoint>& data, double angle, vector<double
 vector<double> getCorrectedFitSlopes(vector<DataPoint>& data, double angle, vector<double> energies);
 double doCorrectionOne(double scint_tot, double angle, double coreDistance, double height);
 double doCorrectionTwo(double scint_tot, double angle, double coreDistance, double height);
-TGraph* plotData(vector<DataPoint>& data, double angle = -1, double energy = -1);
+TGraph* plotData(vector<DataPoint>& data, double angle = -1, double energy = -1, bool doCorrected = false);
 vector<DataPoint> filterData(vector<DataPoint>& data, double angle, double energy);
 TGraph* getSlopesForCoreDistance(vector<DataPoint>& data, double angle, double energy);
 
@@ -127,23 +127,29 @@ int main(int argc, char **argv)
 
 	gStyle->SetPalette(1);
 
-	TCanvas *c = new TCanvas();
+
+	TCanvas* c1 = new TCanvas();
 	TH2F* fit_slopes = makeHistogram(data, angles, energies, false);
 	fit_slopes->GetZaxis()->SetRangeUser(0.75, 1.6);
 	fit_slopes->Draw("colz");
-	c->Update();
+	c1->Update();
 	
-	TCanvas *c2 = new TCanvas();
+	TCanvas* c2 = new TCanvas();
 	TH2F* corrected_fit_slopes = makeHistogram(data, angles, energies, true);
 	corrected_fit_slopes->GetZaxis()->SetRangeUser(0.75, 1.6);
 	corrected_fit_slopes->Draw("colz");
 	c2->Update();
 
-	TCanvas *c3 = new TCanvas();
+	TCanvas* c3 = new TCanvas();
 	TH2F* corrected_fit_slopes2 = makeHistogram(data2, angles, energies, true);
 	corrected_fit_slopes2->GetZaxis()->SetRangeUser(0.75, 1.6);
 	corrected_fit_slopes2->Draw("colz");
 	c3->Update();
+
+	TCanvas* c4 = new TCanvas();
+	TGraph* g1 = plotData(data);
+	g1->Draw("AP");
+	c4->Update();
 
 	theApp.Run();
 
@@ -440,16 +446,28 @@ params
 	double angle : the angle to filter by. Default is -1 if do not need to filter
 	double energy : the energy to filter by. Default is -1 if do not need to filter
 */
-TGraph* plotData(vector<DataPoint>& data, double angle, double energy)
+TGraph* plotData(vector<DataPoint>& data, double angle, double energy, bool doCorrected)
 {
 	TGraph* graph = new TGraph();
+	graph->SetMarkerSize(1);
+	graph->SetMarkerStyle(20);
+	graph->SetMarkerColor(kRed);
 	vector<DataPoint> dataToPlot = filterData(data, angle, energy);
 	int index = 0;
 	for (DataPoint d : dataToPlot)
 	{
-		graph->SetPoint(index, d.wcd_tot, d.scint_tot);
+		if (!doCorrected)
+		{
+			graph->SetPoint(index, d.wcd_tot, d.scint_tot);
+		}
+		else
+		{
+			graph->SetPoint(index, d.wcd_tot, d.corrected_scint_tot);
+		}
 		index++;
 	}
+	graph->GetXaxis()->SetTitle("WCD [VEM]");
+	graph->GetYaxis()->SetTitle("SSD [MIP]");
 	return graph;
 }
 
