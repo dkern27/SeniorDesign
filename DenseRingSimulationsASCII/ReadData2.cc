@@ -55,6 +55,7 @@ double doCorrectionOne(double scint_tot, double angle, double coreDistance, doub
 double doCorrectionTwo(double scint_tot, double angle, double coreDistance, double height);
 TGraph* plotData(vector<DataPoint>& data, double angle = -1, double energy = -1);
 vector<DataPoint> filterData(vector<DataPoint>& data, double angle, double energy);
+TGraph* getSlopesForCoreDistance(vector<DataPoint>& data, double angle, double energy);
 
 
 //Global Variables
@@ -108,6 +109,9 @@ int main(int argc, char **argv)
 		data.insert(data.end(), newData.begin(), newData.end());
 		data2.insert(data2.end(), newData2.begin(), newData2.end());
 	}
+
+  // TO DO: use the getSlopesForCoreDistance function to create the plots. Loop through all the energies and angles, make 24 plots
+
 
   // ----------------------------------------------------------------------
   // If you want to draw any plots to the screen, you first need to declare a TApplication,
@@ -490,7 +494,28 @@ vector<DataPoint> filterData(vector<DataPoint>& data, double angle, double energ
 
 
 
+/*
+Creates a graph showing mip/vem ratio for the various core distances
+params
+  vector<DataPoint>& data All data to be filtered through
+  double angle the angle to filter by
+  double energy the energy to filter by
+*/
+TGraph* getSlopesForCoreDistance(vector<DataPoint>& data, double angle, double energy)
+{
+  TGraph* graph = new TGraph();
+  
 
+  int index = 0;
 
+  //Filters into several graphs
+  for (DataPoint d : data)
+  {
+    if(d.energy == energy && d.angle == angle){
+          graph->SetPoint(index, d.core_distance, (d.scint_tot/d.wcd_tot));
+          index++;
+    }
+  }
 
-
+  return graph;
+}
