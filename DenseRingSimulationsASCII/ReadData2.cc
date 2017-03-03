@@ -436,7 +436,7 @@ params
 	double angle : the angle to filter by. Default is -1 if do not need to filter
 	double energy : the energy to filter by. Default is -1 if do not need to filter
 */
-TGraph* plotData(vector<DataPoint>& data, double angle = -1, double energy = -1)
+TGraph* plotData(vector<DataPoint>& data, double angle, double energy)
 {
 	TGraph* graph = new TGraph();
 	vector<DataPoint> dataToPlot = filterData(data, angle, energy);
