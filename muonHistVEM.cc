@@ -125,6 +125,7 @@ int main(int argc, char* argv[])
 	muonTree->Write("", TObject::kOverwrite);
 	TCanvas *canvas = new TCanvas();
 	errPlot->SetTitle("Errors");
+	errPlot->GetYaxis()->SetTitle("VEM");
 	errPlot->SetMarkerStyle(20);
 	errPlot->SetMarkerColor(kBlue);
 	errPlot->SetMinimum(0);
@@ -155,7 +156,7 @@ Loops through histograms in the tree and finds the VEM and error in the VEM. Ret
 */
 TGraphErrors* fillTreeWithVem(TTree*& muonTree, TH1I*& muonHist, TBranch*& vemBranch, TBranch*& vemErrorBranch, vector<int>& didNotPlot)
 {
-	cout << "Finding VEM for histograms..." << endl;
+	cout << "Finding VEM from histograms..." << endl;
 	// find the size of the tree to limit looping beyond the end of the tree
 	const int treeSize = muonTree->GetEntries();
 	TGraphErrors *errPlot = new TGraphErrors();
