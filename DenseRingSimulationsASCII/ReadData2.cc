@@ -6,6 +6,8 @@
 #include <string>
 #include <sstream> // string manipulation
 #include <vector>
+#include <climits>
+#include <map>
 
 // ROOT
 // Files for certain specific of plots
@@ -108,9 +110,8 @@ int main(int argc, char **argv)
 
 		data.insert(data.end(), newData.begin(), newData.end());
 		data2.insert(data2.end(), newData2.begin(), newData2.end());
-	}
+  }
 
-  // TO DO: use the getSlopesForCoreDistance function to create the plots. Loop through all the energies and angles, make 24 plots
 
 
   // ----------------------------------------------------------------------
@@ -127,6 +128,24 @@ int main(int argc, char **argv)
 
 	gStyle->SetPalette(1);
 
+
+  // TO DO: use the getSlopesForCoreDistance function to create the plots. Loop through all the energies and angles, make 24 plots
+
+
+  for (double energy : energies){
+    for (double angle : angles){
+        string title = "Energy: " + to_string(energy) + " Angle: " + to_string(angle);
+        TCanvas* c = new TCanvas();
+        TGraph* g = getSlopesForCoreDistance(data, angle, energy);
+        g->GetXaxis()->SetTitle("Core Distance");
+        g->GetYaxis()->SetTitle("SSD [MIP] / WCD [VEM]");
+        g->SetMarkerSize(.75);
+        g->SetMarkerStyle(20);
+        g->SetTitle(title.c_str());
+        g->Draw("AP");
+        c->Update();
+    }
+  }
 
 	TCanvas* c1 = new TCanvas();
 	TH2F* fit_slopes = makeHistogram(data, angles, energies, false);
@@ -522,7 +541,9 @@ params
 TGraph* getSlopesForCoreDistance(vector<DataPoint>& data, double angle, double energy)
 {
   TGraph* graph = new TGraph();
+  TGraph* averageGraph = new TGraph();
   
+  map<double, vector<double>> points;
 
   int index = 0;
 
@@ -531,9 +552,24 @@ TGraph* getSlopesForCoreDistance(vector<DataPoint>& data, double angle, double e
   {
     if(d.energy == energy && d.angle == angle){
           graph->SetPoint(index, d.core_distance, (d.scint_tot/d.wcd_tot));
+          points[d.core_distance].push_back(d.scint_tot/d.wcd_tot);
           index++;
     }
   }
+
+  // index = 0;
+  // for (auto const& entry : points) {
+  //   cout << entry.first << endl;
+  //   double sum = 0;
+
+  //   for(point : entry.second){
+  //     sum += point;
+  //   }
+
+  //   averageGraph->SetPoint(index, entry.first, sum/entry.second.size());
+
+  //   index++;
+  // }
 
   return graph;
 }
