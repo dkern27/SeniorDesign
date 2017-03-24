@@ -28,9 +28,10 @@
 using namespace std;
 
 TGraphErrors* fillTreeWithVem(TTree*& muonTree, TH1I*& muonHist, TBranch*& vemBranch, TBranch*& vemErrorBranch, vector<int>& didNotPlot);
-TF1* findVem(TH1I*);
+TF1* findVemPoly2(TH1I*);
+TF1* findVemLogNormal(TH1I* muonHistogram);
 TF1* findVemMultBinsTest(TH1I*);
-float findVemError(TF1*);
+float findVemErrorPoly2(TF1*);
 
 
 void Usage(string myName) 
@@ -169,7 +170,7 @@ TGraphErrors* fillTreeWithVem(TTree*& muonTree, TH1I*& muonHist, TBranch*& vemBr
 		//Protects against empty entries from crashing the program
 		if (muonHist->GetEntries() < 64064/2) //64064 is the number of entries per file
 			continue; 
-		TF1 *fit = findVem(muonHist);
+		TF1 *fit = findVemLogNormal(muonHist);
 		if(fit == NULL)
 		{
 			didNotPlot.push_back(treeStep);
@@ -178,7 +179,7 @@ TGraphErrors* fillTreeWithVem(TTree*& muonTree, TH1I*& muonHist, TBranch*& vemBr
 		double muonHistVem = fit->GetMaximumX();
 		//Since our calculated error is so high, either use no error or bin error to visualize the curve
 		//float error = muonHist->GetBinError(muonHistVem);
-		float error = findVemError(fit);
+		float error = findVemErrorPoly2(fit);
 		double muonHistVemError = error;
 		// cout << muonHistVem << endl;
 		// cout << error << endl;
@@ -197,7 +198,7 @@ TGraphErrors* fillTreeWithVem(TTree*& muonTree, TH1I*& muonHist, TBranch*& vemBr
 /*
 Finds VEM for a single histogram using peak finding and several fits
 */
-TF1* findVem(TH1I* muonHistogram) 
+TF1* findVemPoly2(TH1I* muonHistogram) 
 {
   	//Search for peaks
 	int binNumber = 5;
@@ -222,6 +223,29 @@ TF1* findVem(TH1I* muonHistogram)
 		count++;
 		maxX=f1->GetMaximumX();
 	}
+	return NULL;
+}
+
+TF1* findVemLogNormal(TH1I* muonHistogram) 
+{
+  	//Search for peaks
+	int binNumber = 5;
+	muonHistogram->Rebin(binNumber);
+	TSpectrum *spec = new TSpectrum(3);
+	spec->Search(muonHistogram, 3, "nobackground", 0.25);
+	float* xArray = spec->GetPositionX();
+	float maxX = *max_element(xArray, xArray+spec->GetNPeaks());
+	
+	for (int i = 0; i < 20; i ++)
+	{
+		TF1* f1 = new TF1("f1", "[0]*ROOT::Math::lognormal_pdf(x, [1], [2])", maxX-50, 1200);
+		f1->SetParameters(50000*binNumber, 5, 0.4);
+		muonHistogram->Fit("f1","rq"); //nrq
+		if(abs(maxX - f1->GetMaximumX() <= 5))
+			return f1;
+		maxX = f1->GetMaximumX();
+	}
+	
 	return NULL;
 }
 
@@ -283,7 +307,7 @@ TF1* findVemMultBinsTest(TH1I* muonHistogram)
 /*
 Calculates the error in our VEM based on the equation of a parabola
 */
-float findVemError(TF1* fit) {
+float findVemErrorPoly2(TF1* fit) {
   	//Output parameters
 	float c = fit->GetParameter(0);
 	float cerr = fit->GetParError(0);
