@@ -49,7 +49,7 @@ struct DataPoint {
 //Function Declarations
 void usage();
 vector<DataPoint> ReadFile(ifstream& input_file, string file);
-vector<DataPoint> IDontKnowWhatToCallThis(vector<DataPoint>& data); //Hanna help
+vector<DataPoint> GetMinAndMaxData(vector<DataPoint>& data);
 TH2F* makeHistogram(vector<DataPoint>& data, vector<double> angles, vector<double> energies, bool corrected);
 vector<double> getFitSlopes(vector<DataPoint>& data, double angle, vector<double> energies);
 vector<double> getCorrectedFitSlopes(vector<DataPoint>& data, double angle, vector<double> energies);
@@ -107,11 +107,11 @@ int main(int argc, char **argv)
 		vector<DataPoint> newData = ReadFile(input_file, file);
 		input_file.close();
 
-		vector<DataPoint> newData2 = IDontKnowWhatToCallThis(newData);
+		vector<DataPoint> newData2 = GetMinAndMaxData(newData);
 
 		data.insert(data.end(), newData.begin(), newData.end());
 		data2.insert(data2.end(), newData2.begin(), newData2.end());
-  }
+	}
 
 
 
@@ -130,143 +130,80 @@ int main(int argc, char **argv)
 	gStyle->SetPalette(1);
 
 
-cout << "What plots do you want to display?:" << endl;
-cout << "(ex: 23 will plot options 2 and 3)" << endl;
-cout << "1: Plot all points" << endl;
-cout << "2: Show Fit Slopes on a 2D histogram" << endl;
-cout << "3: Slopes at core distances, points" << endl;
-cout << "4: Slopes at core distances, candle plot" << endl;
+	cout << "What plots do you want to display?:" << endl;
+	cout << "(ex: 23 will plot options 2 and 3)" << endl;
+	cout << "1: Plot all points" << endl;
+	cout << "2: Show Fit Slopes on a 2D histogram" << endl;
+	cout << "3: Slopes at core distances, points" << endl;
+	cout << "4: Slopes at core distances, candle plot" << endl;
 
-string options;
-cin >> options;
+	string options;
+	cin >> options;
 
-for (char& c : options) {
-  int n = c - '0';
-  if (n > 4 || n < 1)
-    cout << c << " is not a valid option, skipping" << endl;
-  else {
-    if (n == 1){
+	for (char& c : options) {
+		int n = c - '0';
+		if (n > 4 || n < 1)
+			cout << c << " is not a valid option, skipping" << endl;
+		else {
+			if (n == 1){
         // PLOT POINTS
-        TCanvas* c4 = new TCanvas();
-        TGraph* g1 = plotData(data);
-        g1->Draw("AP");
-        c4->Update();
-    } else if (n == 2){
+				TCanvas* c4 = new TCanvas();
+				TGraph* g1 = plotData(data);
+				g1->Draw("AP");
+				c4->Update();
+			} else if (n == 2){
         // FIT SLOPES 2D HISTOGRAM
-        TCanvas* c1 = new TCanvas();
-        TH2F* fit_slopes = makeHistogram(data, angles, energies, false);
-        fit_slopes->GetZaxis()->SetRangeUser(0.75, 1.6);
-        fit_slopes->Draw("colz");
-        c1->Update();
-        
-        TCanvas* c2 = new TCanvas();
-        TH2F* corrected_fit_slopes = makeHistogram(data, angles, energies, true);
-        corrected_fit_slopes->GetZaxis()->SetRangeUser(0.75, 1.6);
-        corrected_fit_slopes->Draw("colz");
-        c2->Update();
+				TCanvas* c1 = new TCanvas();
+				TH2F* fit_slopes = makeHistogram(data, angles, energies, false);
+				fit_slopes->GetZaxis()->SetRangeUser(0.75, 1.6);
+				fit_slopes->Draw("colz");
+				c1->Update();
 
-        TCanvas* c3 = new TCanvas();
-        TH2F* corrected_fit_slopes2 = makeHistogram(data2, angles, energies, true);
-        corrected_fit_slopes2->GetZaxis()->SetRangeUser(0.75, 1.6);
-        corrected_fit_slopes2->Draw("colz");
-        c3->Update();
-    } else if (n == 3) {
+				TCanvas* c2 = new TCanvas();
+				TH2F* corrected_fit_slopes = makeHistogram(data, angles, energies, true);
+				corrected_fit_slopes->GetZaxis()->SetRangeUser(0.75, 1.6);
+				corrected_fit_slopes->Draw("colz");
+				c2->Update();
+
+				TCanvas* c3 = new TCanvas();
+				TH2F* corrected_fit_slopes2 = makeHistogram(data2, angles, energies, true);
+				corrected_fit_slopes2->GetZaxis()->SetRangeUser(0.75, 1.6);
+				corrected_fit_slopes2->Draw("colz");
+				c3->Update();
+			} else if (n == 3) {
         // FOR PLOTTING POINTS OF SLOPES AT CORE DIST
-        for (double energy : energies){
-          for (double angle : angles){
-              string title = "Energy: " + to_string(energy) + " Angle: " + to_string(angle);
-              TCanvas* c = new TCanvas();
-              TGraph* g = getSlopesForCoreDistance(data, angle, energy);
-              g->GetXaxis()->SetTitle("Core Distance");
-              g->GetYaxis()->SetTitle("SSD [MIP] / WCD [VEM]");
-              g->SetMarkerSize(.75);
-              g->SetMarkerStyle(20);
-              g->SetTitle(title.c_str());
-              g->Draw("AP");
-              c->Update();
-          }
-        }
-      } else if (n == 4) {
+				for (double energy : energies){
+					for (double angle : angles){
+						string title = "Energy: " + to_string(energy) + " Angle: " + to_string(angle);
+						TCanvas* c = new TCanvas();
+						TGraph* g = getSlopesForCoreDistance(data, angle, energy);
+						g->GetXaxis()->SetTitle("Core Distance");
+						g->GetYaxis()->SetTitle("SSD [MIP] / WCD [VEM]");
+						g->SetMarkerSize(.75);
+						g->SetMarkerStyle(20);
+						g->SetTitle(title.c_str());
+						g->Draw("AP");
+						c->Update();
+					}
+				}
+			} else if (n == 4) {
        // FOR PLOTTING CANDLE PLOTS OF SLOPES AT CORE DIST
-        for (double energy : energies){
-          for (double angle : angles){
-              string title = "Energy: " + to_string(energy) + " Angle: " + to_string(angle);
-              TCanvas* c = new TCanvas();
-              TH2F* g = getSlopesForCoreDistanceCandlePlot(data, angle, energy);
-              g->GetXaxis()->SetTitle("Core Distance");
-              g->GetYaxis()->SetTitle("SSD [MIP] / WCD [VEM]");
-              // g->SetBarWidth(0.4);
-              // g->SetBarOffset(-0.25);
-              // g->SetFillStyle(1001);
-              g->SetTitle(title.c_str());
-              g->Draw("candle2");
-              c->Update();
-          }
-        }
-      }
-    }
+				for (double energy : energies){
+					for (double angle : angles){
+						string title = "Energy: " + to_string(energy) + " Angle: " + to_string(angle);
+						TCanvas* c = new TCanvas();
+						TH2F* g = getSlopesForCoreDistanceCandlePlot(data, angle, energy);
+						g->GetXaxis()->SetTitle("Core Distance");
+						g->GetYaxis()->SetTitle("SSD [MIP] / WCD [VEM]");
+						g->SetTitle(title.c_str());
+						g->Draw("candle2");
+						c->Update();
+					}
+				}
+			}
+		}
 
-  }
-
-
- //  // FOR PLOTTING POINTS OF SLOPES AT CORE DIST
- //  for (double energy : energies){
- //    for (double angle : angles){
- //        string title = "Energy: " + to_string(energy) + " Angle: " + to_string(angle);
- //        TCanvas* c = new TCanvas();
- //        TGraph* g = getSlopesForCoreDistance(data, angle, energy);
- //        g->GetXaxis()->SetTitle("Core Distance");
- //        g->GetYaxis()->SetTitle("SSD [MIP] / WCD [VEM]");
- //        g->SetMarkerSize(.75);
- //        g->SetMarkerStyle(20);
- //        g->SetTitle(title.c_str());
- //        g->Draw("AP");
- //        c->Update();
- //    }
- //  }
-
- //  // FOR PLOTTING CANDLE PLOTS OF SLOPES AT CORE DIST
- //  for (double energy : energies){
- //    for (double angle : angles){
- //        string title = "Energy: " + to_string(energy) + " Angle: " + to_string(angle);
- //        TCanvas* c = new TCanvas();
- //        TH2F* g = getSlopesForCoreDistanceCandlePlot(data, angle, energy);
- //        g->GetXaxis()->SetTitle("Core Distance");
- //        g->GetYaxis()->SetTitle("SSD [MIP] / WCD [VEM]");
- //        // g->SetBarWidth(0.4);
- //        // g->SetBarOffset(-0.25);
- //        // g->SetFillStyle(1001);
- //        g->SetTitle(title.c_str());
- //        g->Draw("candle2");
- //        c->Update();
- //    }
- //  }
-
- //  // FIT SLOPES 2D HISTOGRAM
-	// TCanvas* c1 = new TCanvas();
-	// TH2F* fit_slopes = makeHistogram(data, angles, energies, false);
-	// fit_slopes->GetZaxis()->SetRangeUser(0.75, 1.6);
-	// fit_slopes->Draw("colz");
-	// c1->Update();
-	
-	// TCanvas* c2 = new TCanvas();
-	// TH2F* corrected_fit_slopes = makeHistogram(data, angles, energies, true);
-	// corrected_fit_slopes->GetZaxis()->SetRangeUser(0.75, 1.6);
-	// corrected_fit_slopes->Draw("colz");
-	// c2->Update();
-
-	// TCanvas* c3 = new TCanvas();
-	// TH2F* corrected_fit_slopes2 = makeHistogram(data2, angles, energies, true);
-	// corrected_fit_slopes2->GetZaxis()->SetRangeUser(0.75, 1.6);
-	// corrected_fit_slopes2->Draw("colz");
-	// c3->Update();
-
-
- //  // PLOT POINTS
-	// TCanvas* c4 = new TCanvas();
-	// TGraph* g1 = plotData(data);
-	// g1->Draw("AP");
-	// c4->Update();
+	}
 
 	theApp.Run();
 
@@ -331,7 +268,7 @@ vector<DataPoint> ReadFile(ifstream& input_file, string file)
 }
 
 //I hate this function so much
-vector<DataPoint> IDontKnowWhatToCallThis(vector<DataPoint>& data)
+vector<DataPoint> GetMinAndMaxData(vector<DataPoint>& data)
 {
 	DataPoint max600 = {0,0,0,0,INT_MIN,0};
 	DataPoint min600 = {0,0,0,0,INT_MAX,0};
@@ -638,75 +575,46 @@ params
 */
 TGraph* getSlopesForCoreDistance(vector<DataPoint>& data, double angle, double energy)
 {
-  TGraph* graph = new TGraph();
-  TGraph* averageGraph = new TGraph();
-  
-  map<double, vector<double>> points;
+	TGraph* graph = new TGraph();
+	TGraph* averageGraph = new TGraph();
 
-  int index = 0;
+	map<double, vector<double>> points;
+
+	int index = 0;
 
   //Filters into several graphs
-  for (DataPoint d : data)
-  {
-    if(d.energy == energy && d.angle == angle){
-          graph->SetPoint(index, d.core_distance, (d.scint_tot/d.wcd_tot));
-          points[d.core_distance].push_back(d.scint_tot/d.wcd_tot);
-          index++;
-    }
-  }
+	for (DataPoint d : data)
+	{
+		if(d.energy == energy && d.angle == angle){
+			graph->SetPoint(index, d.core_distance, (d.scint_tot/d.wcd_tot));
+			points[d.core_distance].push_back(d.scint_tot/d.wcd_tot);
+			index++;
+		}
+	}
 
-  // index = 0;
-  // for (auto const& entry : points) {
-  //   cout << entry.first << endl;
-  //   double sum = 0;
-
-  //   for(point : entry.second){
-  //     sum += point;
-  //   }
-
-  //   averageGraph->SetPoint(index, entry.first, sum/entry.second.size());
-
-  //   index++;
-  // }
-
-  return graph;
+	return graph;
 }
 
 TH2F* getSlopesForCoreDistanceCandlePlot(vector<DataPoint>& data, double angle, double energy)
 {
-  int nx = 10;
-  int ny = 1000;
-  int minx = 500;
-  int maxx = 1100;
-  double miny = 0.;
-  double maxy = 2.2;
+	int nx = 10;
+	int ny = 1000;
+	int minx = 500;
+	int maxx = 1100;
+	double miny = 0.;
+	double maxy = 2.2;
 
 
-  TH2F* graph = new TH2F("nameinmemory", "title", nx, minx, maxx, ny, miny, maxy);
+	TH2F* graph = new TH2F("hist_core_dist", "title", nx, minx, maxx, ny, miny, maxy);
 
   //Filters into several graphs
-  for (DataPoint d : data)
-  {
-    if(d.energy == energy && d.angle == angle){
-          graph->Fill(d.core_distance, (d.scint_tot/d.wcd_tot));       
-    }
-    
-  }
+	for (DataPoint d : data)
+	{
+		if(d.energy == energy && d.angle == angle)
+		{
+			graph->Fill(d.core_distance, (d.scint_tot/d.wcd_tot));       
+		}
+	}
 
-
-  // index = 0;
-  // for (auto const& entry : points) {
-  //   cout << entry.first << endl;
-  //   double sum = 0;
-
-  //   for(point : entry.second){
-  //     sum += point;
-  //   }
-
-  //   averageGraph->SetPoint(index, entry.first, sum/entry.second.size());
-
-  //   index++;
-  // }
-
-  return graph;
+	return graph;
 }
