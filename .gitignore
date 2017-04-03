@@ -39,7 +39,6 @@ failedIndexes.txt
 
 #dense ring
 DenseRingSimulationsASCII/lg*
-DenseRingSimulationsASCII/ReadData
 DenseRingSimulationsASCII/*.png
 DenseRingSimulationsASCII/*.pdf
-DenseRingSimulationsASCII/ReadData2
+DenseRingSimulationsASCII/DRS_Plots
