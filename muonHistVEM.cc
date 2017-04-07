@@ -46,7 +46,8 @@ void Usage(string myName)
 	cout << myName << " takes a ROOT file with a TTree containing muon histograms and computes the " << endl
 	<< "VEM for each histogram, adding it to a new branch in the ROOT tree. " << endl << endl;
 	cout << " NOTES : " << endl;
-	cout << "Sometimes finds VEM at very high numbers, well above the range of the histogram. Run the progam again to try again." << endl << endl;
+	cout << "Using the Log Normal Fit takes much longer than the Polynomial fit" << endl;
+	cout << "Sometimes finds VEM at very high numbers, well above the range of the histogram. Run the program again to try again." << endl << endl;
 
 	exit(0);
 }
