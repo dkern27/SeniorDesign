@@ -125,8 +125,14 @@ int main(int argc, char* argv[])
 	cout << "1. Second degree polynomial" << endl;
 	cout << "2. Log Normal" << endl;
 	cout << "Enter 1 or 2: ";
-	int choice;
-	cin >> choice;
+	int choice = 0;
+	while(!(cin >> choice) || choice < 1 || choice > 2)
+	{
+		cin.clear();
+		cin.ignore(INT_MAX, '\n');
+		cout << "Bad input - try again: ";
+	}
+
 	useLogNormalFit = (choice == 2);
 
 	//Find VEM for each histogram
