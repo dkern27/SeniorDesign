@@ -32,7 +32,9 @@ TF1* findVemPoly2(TH1I*);
 TF1* findVemLogNormal(TH1I* muonHistogram);
 TF1* findVemMultBinsTest(TH1I*);
 float findVemErrorPoly2(TF1*);
+float findVemErrorLogNormal(TF1* fit);
 
+bool useLogNormalFit = false;
 
 void Usage(string myName) 
 {
@@ -118,6 +120,14 @@ int main(int argc, char* argv[])
 		vemErrorBranch = muonTree->Branch("muonHistVemError", &muonHistVemError, "muonHistVemError/D");
 	}
 
+	cout << "Choose a fit to use: " << endl;
+	cout << "1. Second degree polynomial" << endl;
+	cout << "2. Log Normal" << endl;
+	cout << "Enter 1 or 2: ";
+	int choice;
+	cin >> choice;
+	useLogNormalFit = (choice == 2);
+
 	//Find VEM for each histogram
 	vector<int> didNotPlot;
   	TGraphErrors *errPlot = fillTreeWithVem(muonTree, muonHist, vemBranch, vemErrorBranch, didNotPlot);
@@ -169,18 +179,44 @@ TGraphErrors* fillTreeWithVem(TTree*& muonTree, TH1I*& muonHist, TBranch*& vemBr
 
 		//Protects against empty entries from crashing the program
 		if (muonHist->GetEntries() < 64064/2) //64064 is the number of entries per file
+		{
 			continue; 
-		TF1 *fit = findVemLogNormal(muonHist);
+		}
+
+		TF1* fit = NULL;
+		if(useLogNormalFit)
+		{
+			fit = findVemLogNormal(muonHist);
+		}
+		else
+		{
+			fit = findVemPoly2(muonHist);
+		}
+
 		if(fit == NULL)
 		{
 			didNotPlot.push_back(treeStep);
 			continue;
 		}
+		
+		float error;
+		if(useLogNormalFit)
+		{
+			error = findVemErrorLogNormal(fit);
+		}
+		else
+		{
+			error = findVemErrorPoly2(fit);
+		}
+
 		double muonHistVem = fit->GetMaximumX();
-		//Since our calculated error is so high, either use no error or bin error to visualize the curve
-		//float error = muonHist->GetBinError(muonHistVem);
-		float error = findVemErrorPoly2(fit);
 		double muonHistVemError = error;
+
+		//Error is too big, throw out point
+		if(error > muonHistVem)
+		{
+			continue;
+		}
 		// cout << muonHistVem << endl;
 		// cout << error << endl;
 		
@@ -196,7 +232,7 @@ TGraphErrors* fillTreeWithVem(TTree*& muonTree, TH1I*& muonHist, TBranch*& vemBr
 }
 
 /*
-Finds VEM for a single histogram using peak finding and several fits
+Finds VEM for a single histogram using peak finding and several fits of a polynomial
 */
 TF1* findVemPoly2(TH1I* muonHistogram) 
 {
@@ -226,6 +262,9 @@ TF1* findVemPoly2(TH1I* muonHistogram)
 	return NULL;
 }
 
+/*
+Finds VEM for a single histogram using a log normal fit
+*/
 TF1* findVemLogNormal(TH1I* muonHistogram) 
 {
   	//Search for peaks
@@ -323,4 +362,20 @@ float findVemErrorPoly2(TF1* fit) {
 	float stdDevX = sqrt(varianceX);
 
 	return stdDevX;
+}
+
+/*
+Calculates the error in our VEM based on the log normal
+*/
+float findVemErrorLogNormal(TF1* fit) 
+{
+  	//Output parameters
+	float m = fit->GetParameter(1);
+	float merr = fit->GetParError(1);
+	float s = fit->GetParameter(2);
+	float serr = fit->GetParError(2);
+	float vem = fit->GetMaximumX();
+
+	float stdev = vem * sqrt(pow(merr, 2) + pow(2*s*serr,2));
+	return stdev;
 }
