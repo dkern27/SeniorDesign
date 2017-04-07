@@ -124,7 +124,7 @@ int main(int argc, char **argv)
 	for (char& c : options) 
 	{
 		int n = c - '0';
-		if (n > 4 || n < 1)
+		if (n > 5 || n < 1)
 		{
 			cout << c << " is not a valid option, skipping" << endl;
 		}
@@ -185,6 +185,20 @@ int main(int argc, char **argv)
 					{
 						TCanvas* c = new TCanvas();
 						TH2F* g = Plotter::getSlopeVsDistanceCandlePlot(data, angle, energy);
+						g->Draw("candle2");
+						c->Update();
+					}
+				}
+			}
+			else if (n == 5)
+			{
+				// FOR PLOTTING CANDLE PLOTS OF SLOPES AT CORE DIST SPECIFIC POINTS
+				for (double energy : energies)
+				{
+					for (double angle : angles)
+					{
+						TCanvas* c = new TCanvas();
+						TH2F* g = Plotter::getSlopeVsDistanceCandlePlotSpecificPoints(data, angle, energy);
 						g->Draw("candle2");
 						c->Update();
 					}

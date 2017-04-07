@@ -103,6 +103,42 @@ TH2F* Plotter::getSlopeVsDistanceCandlePlot(vector<DataPoint>& data, double angl
 	return graph;
 }
 
+/*
+Creates a candle plot showing mip/vem ratio for the various core distances, only taking 9 and 3 (the middle points)
+paramss
+  vector<DataPoint>& data All data to be filtered through
+  double angle the angle to filter by
+  double energy the energy to filter by
+*/
+TH2F* Plotter::getSlopeVsDistanceCandlePlotSpecificPoints(vector<DataPoint>& data, double angle, double energy)
+{
+	int nx = 10;
+	int ny = 1000;
+	int minx = 500;
+	int maxx = 1100;
+	double miny = 0.;
+	double maxy = 2.2;
+
+	string title = "Energy: " + to_string(energy) + " Angle: " + to_string(angle);
+
+	TH2F* graph = new TH2F("hist_core_dist", title.c_str(), nx, minx, maxx, ny, miny, maxy);
+
+  //Filters into several graphs
+	for (DataPoint d : data)
+	{
+		string station_id_str = to_string(d.station_id);
+		if(d.energy == energy && d.angle == angle && (station_id_str[4] == '3' || station_id_str[4] == '9'))
+		{
+			graph->Fill(d.core_distance, (d.scint_tot/d.wcd_tot));       
+		}
+	}
+
+	graph->GetXaxis()->SetTitle("Core Distance");
+	graph->GetYaxis()->SetTitle("SSD [MIP] / WCD [VEM]");
+
+	return graph;
+}
+
 // void Plotter::addToData(DataPoint d)
 // {
 // 	data.push_back(d);

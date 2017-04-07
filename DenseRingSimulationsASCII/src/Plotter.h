@@ -21,6 +21,7 @@ class Plotter
 		static TGraph* plotData(vector<DataPoint>& data, double angle = -1, double energy = -1, bool doCorrected = false);
 		static TH2F* make2DHistogram(vector<DataPoint>& data, vector<double> angles, vector<double> energies, bool corrected);
 		static TH2F* getSlopeVsDistanceCandlePlot(vector<DataPoint>& data, double angle, double energy);
+		static TH2F* getSlopeVsDistanceCandlePlotSpecificPoints(vector<DataPoint>& data, double angle, double energy);
 
 		//void addToData(DataPoint d);
 		//vector<DataPoint> getData();

@@ -15,7 +15,8 @@ params
 vector<DataPoint> DataPoint::ReadFile(ifstream& input_file, string file)
 {
 	vector<DataPoint> data;
-	int station_id, scin_sat_status, wcd_sat_status;
+	int station_id;
+	int scin_sat_status, wcd_sat_status;
 	double r_mc;
 	double scint_tot, scin_em, scin_mu;
 	double wcd_tot, wcd_em, wcd_mu;
@@ -47,7 +48,7 @@ vector<DataPoint> DataPoint::ReadFile(ifstream& input_file, string file)
 		>> scin_sat_status >> wcd_sat_status;
 
 		//Using 20000 as height of shower axis
-		DataPoint newPoint = {r_mc, energy, theta, wcd_tot, scint_tot, doCorrectionOne(scint_tot, theta, r_mc, 20000)};
+		DataPoint newPoint = {station_id, r_mc, energy, theta, wcd_tot, scint_tot, doCorrectionOne(scint_tot, theta, r_mc, 20000)};
 		data.push_back(newPoint);
 	}
 	return data;

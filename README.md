@@ -22,3 +22,6 @@ rootbuild -o muonHistFromBinary muonHistFromBinary.cc $ROOTLIBS
 
 View multiple graphs
 rt muonHistBatchPlot.C
+
+
+data = {Energy : {angle : [array(scint, wc)] }}

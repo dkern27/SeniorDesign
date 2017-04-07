@@ -9,7 +9,7 @@ CC=g++
 CFLAGS = -Wall `root-config --cflags`
 # -Wall, shows all warnings, -w suppresses all warnings, -v verbose output
 ROOTBUILD = $(CC) $(CFLAGS)
-ROOTLIBS=-L/opt/local/lib/root5 -lGui -lCore -lCint -lRIO -lNet -lHist -lGraf -lGraf3d -lGpad -lTree -lRint -lPostscript -lMatrix -lPhysics -lMathCore -lUnuran -lThread -pthread -lm -ldl -rdynamic -lSpectrum
+#ROOTLIBS=-L/opt/local/lib/root5 -lGui -lCore -lCint -lRIO -lNet -lHist -lGraf -lGraf3d -lGpad -lTree -lRint -lPostscript -lMatrix -lPhysics -lMathCore -lUnuran -lThread -pthread -lm -ldl -rdynamic -lSpectrum
 VERSION = -std=c++11
 
 HEADERS = src/*.h

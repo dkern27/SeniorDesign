@@ -17,6 +17,7 @@ class DataPoint
 		static vector<DataPoint> GetMinAndMaxData(vector<DataPoint>& data);
 		static vector<DataPoint> filterData(vector<DataPoint>& data, double angle, double energy);
 
+		int station_id;
 		double core_distance;
 		double energy;
 		double angle;
