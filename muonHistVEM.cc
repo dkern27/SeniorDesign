@@ -191,39 +191,40 @@ TGraphErrors* fillTreeWithVem(TTree*& muonTree, TH1I*& muonHist, TBranch*& vemBr
 		}
 
 		TF1* fit = NULL;
+		float error;
 		if(useLogNormalFit)
 		{
 			fit = findVemLogNormal(muonHist);
+			if(fit == NULL)
+			{
+				didNotPlot.push_back(treeStep);
+				continue;
+			}
+			error = findVemErrorLogNormal(fit);
+			//Error is too big, throw out point
+			//All error is large for polynomial so only do this for log normal
+			if(error > 100)
+			{
+				continue;
+			}
 		}
 		else
 		{
 			fit = findVemPoly2(muonHist);
-		}
-
-		if(fit == NULL)
-		{
-			didNotPlot.push_back(treeStep);
-			continue;
-		}
-		
-		float error;
-		if(useLogNormalFit)
-		{
-			error = findVemErrorLogNormal(fit);
-		}
-		else
-		{
+			if(fit == NULL)
+			{
+				didNotPlot.push_back(treeStep);
+				continue;
+			}
 			error = findVemErrorPoly2(fit);
 		}
 
+		double reducedChiSquare = fit->GetChisquare()/fit->GetNDF();
+		if(reducedChiSquare > 8)
+			continue;
+
 		double muonHistVem = fit->GetMaximumX();
 		double muonHistVemError = error;
-
-		//Error is too big, throw out point
-		if(error > muonHistVem)
-		{
-			continue;
-		}
 		// cout << muonHistVem << endl;
 		// cout << error << endl;
 		
@@ -278,7 +279,7 @@ TF1* findVemLogNormal(TH1I* muonHistogram)
 	int binNumber = 5;
 	muonHistogram->Rebin(binNumber);
 	TSpectrum *spec = new TSpectrum(3);
-	spec->Search(muonHistogram, 3, "nobackground", 0.25);
+	spec->Search(muonHistogram, 3, "nodrawnobackground", 0.25);
 	float* xArray = spec->GetPositionX();
 	float maxX = *max_element(xArray, xArray+spec->GetNPeaks());
 	
@@ -286,7 +287,7 @@ TF1* findVemLogNormal(TH1I* muonHistogram)
 	{
 		TF1* f1 = new TF1("f1", "[0]*ROOT::Math::lognormal_pdf(x, [1], [2])", maxX-50, 1200);
 		f1->SetParameters(50000*binNumber, 5, 0.4);
-		muonHistogram->Fit("f1","rq"); //nrq
+		muonHistogram->Fit("f1","NRq");
 		if(abs(maxX - f1->GetMaximumX() <= 5))
 			return f1;
 		maxX = f1->GetMaximumX();
