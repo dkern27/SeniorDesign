@@ -6,7 +6,8 @@
 #include <string>
 #include <sstream> // string manipulation
 #include <vector>
-#include <map>
+#include <set>
+#include <cctype>
 
 // ROOT
 // Files for certain specific of plots
@@ -40,7 +41,8 @@ using namespace std; // So the compiler interprets cout as std::cout
 
 //Function Declarations
 void usage();
-TGraph* getSlopesForCoreDistance(vector<DataPoint>& data, double angle, double energy);
+bool isInteger(string str);
+set<string> getStationIds();
 
 //Global Variables
 
@@ -72,11 +74,12 @@ int main(int argc, char **argv)
 
   // -------------------
 	vector<DataPoint> data;
-	vector<DataPoint> data2;
+	vector<DataPoint> minMaxData;
 	
   // ----------------------------------------------------------------------
   // Loop over files
   // read the file as the second to last argument
+	cout << "Reading in data..." << endl;
 	for (int iFile = 1; iFile <= argc - 1; iFile++) 
 	{
 		ifstream input_file;
@@ -91,7 +94,7 @@ int main(int argc, char **argv)
 		vector<DataPoint> newData2 = DataPoint::GetMinAndMaxData(newData);
 
 		data.insert(data.end(), newData.begin(), newData.end());
-		data2.insert(data2.end(), newData2.begin(), newData2.end());
+		minMaxData.insert(minMaxData.end(), newData2.begin(), newData2.end());
 	}
 
 
@@ -143,16 +146,19 @@ int main(int argc, char **argv)
         		// FIT SLOPES 2D HISTOGRAM
 				TCanvas* c2 = new TCanvas();
 				TH2F* fit_slopes = Plotter::make2DHistogram(data, angles, energies, false);
+				fit_slopes->SetTitle("Fit Slopes");
 				fit_slopes->Draw("colz");
 				c2->Update();
 
 				TCanvas* c3 = new TCanvas();
 				TH2F* corrected_fit_slopes = Plotter::make2DHistogram(data, angles, energies, true);
+				corrected_fit_slopes->SetTitle("Corrected Fit Slopes");
 				corrected_fit_slopes->Draw("colz");
 				c3->Update();
 
 				TCanvas* c4 = new TCanvas();
-				TH2F* corrected_fit_slopes2 = Plotter::make2DHistogram(data2, angles, energies, true);
+				TH2F* corrected_fit_slopes2 = Plotter::make2DHistogram(minMaxData, angles, energies, true);
+				corrected_fit_slopes2->SetTitle("Corrected Fit Slopes of min/max scint_tot data");
 				corrected_fit_slopes2->Draw("colz");
 				c4->Update();
 			} 
@@ -165,7 +171,7 @@ int main(int argc, char **argv)
 					{
 						string title = "Energy: " + to_string(energy) + " Angle: " + to_string(angle);
 						TCanvas* c = new TCanvas();
-						TGraph* g = getSlopesForCoreDistance(data, angle, energy);
+						TGraph* g = Plotter::getSlopesForCoreDistance(data, angle, energy);
 						g->GetXaxis()->SetTitle("Core Distance");
 						g->GetYaxis()->SetTitle("SSD [MIP] / WCD [VEM]");
 						g->SetMarkerSize(.75);
@@ -178,27 +184,14 @@ int main(int argc, char **argv)
 			} 
 			else if (n == 4)
 			{
+				set<string> stationIds = getStationIds();
        			// FOR PLOTTING CANDLE PLOTS OF SLOPES AT CORE DIST
 				for (double energy : energies)
 				{
 					for (double angle : angles)
 					{
 						TCanvas* c = new TCanvas();
-						TH2F* g = Plotter::getSlopeVsDistanceCandlePlot(data, angle, energy);
-						g->Draw("candle2");
-						c->Update();
-					}
-				}
-			}
-			else if (n == 5)
-			{
-				// FOR PLOTTING CANDLE PLOTS OF SLOPES AT CORE DIST SPECIFIC POINTS
-				for (double energy : energies)
-				{
-					for (double angle : angles)
-					{
-						TCanvas* c = new TCanvas();
-						TH2F* g = Plotter::getSlopeVsDistanceCandlePlotSpecificPoints(data, angle, energy);
+						TH2F* g = Plotter::getSlopeVsDistanceCandlePlot(data, angle, energy, stationIds);
 						g->Draw("candle2");
 						c->Update();
 					}
@@ -223,31 +216,36 @@ void usage()
 		"Describe here \n");
 }
 
-
-/*
-Creates a graph showing mip/vem ratio for the various core distances
-params
-  vector<DataPoint>& data All data to be filtered through
-  double angle the angle to filter by
-  double energy the energy to filter by
-*/
-TGraph* getSlopesForCoreDistance(vector<DataPoint>& data, double angle, double energy)
+bool isInteger(string str)
 {
-	TGraph* graph = new TGraph();
+	if(str.length() == 0)
+		return false;
 
-	map<double, vector<double>> points;
-
-	int index = 0;
-
-  //Filters into several graphs
-	for (DataPoint d : data)
+	for(int i = 0; i < str.length(); i++)
 	{
-		if(d.energy == energy && d.angle == angle){
-			graph->SetPoint(index, d.core_distance, (d.scint_tot/d.wcd_tot));
-			points[d.core_distance].push_back(d.scint_tot/d.wcd_tot);
-			index++;
+		if(!isdigit(str[i]))
+			return false;
+	}
+	return true;
+}
+
+set<string> getStationIds()
+{
+	cout << "Enter the last two digits of the station ids one at a time. No station ids will plot all station ids. Enter 'done' to start plotting." << endl;
+	set<string> stationIds;
+	string sid = "";
+	while (sid != "done")
+	{
+		cout << "Station ID: ";
+		cin >> sid;
+		if (isInteger(sid))
+		{
+			stationIds.insert(sid);
+		}
+		else if (sid != "done")
+		{
+			cout << "Input was not an integer" << endl;
 		}
 	}
-
-	return graph;
+	return stationIds;
 }

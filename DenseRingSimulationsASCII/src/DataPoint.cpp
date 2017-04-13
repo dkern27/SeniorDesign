@@ -6,6 +6,17 @@
 /////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////
 
+DataPoint::DataPoint(int station_id, double core_distance, double energy, double angle, double wcd_tot, double scint_tot, double corrected_scint_tot)
+{
+	this->station_id = station_id;
+	this->core_distance = core_distance;
+	this->energy = energy;
+	this->angle = angle;
+	this->wcd_tot = wcd_tot;
+	this->scint_tot = scint_tot;
+	this->corrected_scint_tot = corrected_scint_tot;
+}
+
 /*
 Reads in a file that has already been opened
 params
@@ -48,7 +59,7 @@ vector<DataPoint> DataPoint::ReadFile(ifstream& input_file, string file)
 		>> scin_sat_status >> wcd_sat_status;
 
 		//Using 20000 as height of shower axis
-		DataPoint newPoint = {station_id, r_mc, energy, theta, wcd_tot, scint_tot, doCorrectionOne(scint_tot, theta, r_mc, 20000)};
+		DataPoint newPoint(station_id, r_mc, energy, theta, wcd_tot, scint_tot, doCorrectionOne(scint_tot, theta, r_mc, 20000));
 		data.push_back(newPoint);
 	}
 	return data;
@@ -57,12 +68,12 @@ vector<DataPoint> DataPoint::ReadFile(ifstream& input_file, string file)
 //I hate this function so much
 vector<DataPoint> DataPoint::GetMinAndMaxData(vector<DataPoint>& data)
 {
-	DataPoint max600 = {0,0,0,0,INT_MIN,0};
-	DataPoint min600 = {0,0,0,0,INT_MAX,0};
-	DataPoint max800 = {0,0,0,0,INT_MIN,0};
-	DataPoint min800 = {0,0,0,0,INT_MAX,0};
-	DataPoint max1000 = {0,0,0,0,INT_MIN,0};
-	DataPoint min1000 = {0,0,0,0,INT_MAX,0};
+	DataPoint max600 (0,0,0,0,0,INT_MIN,0);
+	DataPoint min600 (0,0,0,0,0,INT_MAX,0);
+	DataPoint max800 (0,0,0,0,0,INT_MIN,0);
+	DataPoint min800 (0,0,0,0,0,INT_MAX,0);
+	DataPoint max1000 (0,0,0,0,0,INT_MIN,0);
+	DataPoint min1000 (0,0,0,0,0,INT_MAX,0);
 	for(DataPoint d:data)
 	{
 		if(d.core_distance == 600)
@@ -113,6 +124,7 @@ vector<DataPoint> DataPoint::GetMinAndMaxData(vector<DataPoint>& data)
 	otherData.push_back(max800);
 	otherData.push_back(min1000);
 	otherData.push_back(max1000);
+	
 	return otherData;
 }
 

@@ -48,8 +48,8 @@ params
 */
 TH2F* Plotter::make2DHistogram(vector<DataPoint>& data, vector<double> angles, vector<double> energies, bool corrected)
 {
-	//args: name, title, num_bins_x, min_x, max_x, num_bins_y, min_y, max_y
-	TH2F *fit_slopes = new TH2F("slopes", "Slopes", energies.size(), 0, energies.size(), angles.size(), 0, angles.size());
+	//TH2F args: name in memory, title, num_bins_x, min_x, max_x, num_bins_y, min_y, max_y
+	TH2F *fit_slopes = new TH2F("slopes", "Fit Slopes", energies.size(), 0, energies.size(), angles.size(), 0, angles.size());
 	for (int i = 0; i < angles.size(); i++)
 	{
 		vector<double> slopes;
@@ -64,36 +64,29 @@ TH2F* Plotter::make2DHistogram(vector<DataPoint>& data, vector<double> angles, v
 			fit_slopes->Fill(j, i, slopes[j]);
 		}
 	}
+	//This has been set from looking at the graphs and choosing a range to use most colors
 	fit_slopes->GetZaxis()->SetRangeUser(0.75, 1.6);
 	return fit_slopes;
 }
 
 /*
-Creates a candle plot showing mip/vem ratio for the various core distances
-paramss
+Creates a graph showing mip/vem ratio for the various core distances
+params
   vector<DataPoint>& data All data to be filtered through
   double angle the angle to filter by
   double energy the energy to filter by
 */
-TH2F* Plotter::getSlopeVsDistanceCandlePlot(vector<DataPoint>& data, double angle, double energy)
+TGraph* Plotter::getSlopesForCoreDistance(vector<DataPoint>& data, double angle, double energy)
 {
-	int nx = 10;
-	int ny = 1000;
-	int minx = 500;
-	int maxx = 1100;
-	double miny = 0.;
-	double maxy = 2.2;
+	TGraph* graph = new TGraph();
 
-	string title = "Energy: " + to_string(energy) + " Angle: " + to_string(angle);
-
-	TH2F* graph = new TH2F("hist_core_dist", title.c_str(), nx, minx, maxx, ny, miny, maxy);
-
-  //Filters into several graphs
+	int index = 0;
 	for (DataPoint d : data)
 	{
 		if(d.energy == energy && d.angle == angle)
 		{
-			graph->Fill(d.core_distance, (d.scint_tot/d.wcd_tot));       
+			graph->SetPoint(index, d.core_distance, (d.scint_tot/d.wcd_tot));
+			index++;
 		}
 	}
 
@@ -104,13 +97,14 @@ TH2F* Plotter::getSlopeVsDistanceCandlePlot(vector<DataPoint>& data, double angl
 }
 
 /*
-Creates a candle plot showing mip/vem ratio for the various core distances, only taking 9 and 3 (the middle points)
+Creates a candle plot showing mip/vem ratio for the various core distances, can filter by sation id
 paramss
   vector<DataPoint>& data All data to be filtered through
   double angle the angle to filter by
   double energy the energy to filter by
+  set<int> stationIds station Ids to plot
 */
-TH2F* Plotter::getSlopeVsDistanceCandlePlotSpecificPoints(vector<DataPoint>& data, double angle, double energy)
+TH2F* Plotter::getSlopeVsDistanceCandlePlot(vector<DataPoint>& data, double angle, double energy, set<string> stationIds)
 {
 	int nx = 10;
 	int ny = 1000;
@@ -119,15 +113,20 @@ TH2F* Plotter::getSlopeVsDistanceCandlePlotSpecificPoints(vector<DataPoint>& dat
 	double miny = 0.;
 	double maxy = 2.2;
 
-	string title = "Energy: " + to_string(energy) + " Angle: " + to_string(angle);
 
-	TH2F* graph = new TH2F("hist_core_dist", title.c_str(), nx, minx, maxx, ny, miny, maxy);
+	string title = "Fit Slopes vs. Distance | Energy: " + to_string(energy) + " Angle: " + to_string(angle);
+
+	TH2F* graph = new TH2F(title.c_str(), title.c_str(), nx, minx, maxx, ny, miny, maxy);
+
+	vector<DataPoint> filteredData = DataPoint::filterData(data, angle, energy);
 
   //Filters into several graphs
 	for (DataPoint d : data)
 	{
-		string station_id_str = to_string(d.station_id);
-		if(d.energy == energy && d.angle == angle && (station_id_str[4] == '3' || station_id_str[4] == '9'))
+		string id = to_string(d.station_id);
+		//empty station ids is plotting all stations
+		//otherwise look at last two digits of station id
+		if(stationIds.empty() || stationIds.find(id.substr(id.length()-2)) != stationIds.end())
 		{
 			graph->Fill(d.core_distance, (d.scint_tot/d.wcd_tot));       
 		}
@@ -138,26 +137,6 @@ TH2F* Plotter::getSlopeVsDistanceCandlePlotSpecificPoints(vector<DataPoint>& dat
 
 	return graph;
 }
-
-// void Plotter::addToData(DataPoint d)
-// {
-// 	data.push_back(d);
-// }
-
-// vector<DataPoint> Plotter::getData()
-// {
-// 	return data;
-// }
-
-// void Plotter::addToCorrectedData(DataPoint d)
-// {
-// 	correctedData.push_back(d);
-// }
-
-// vector<DataPoint> Plotter::getCorrectedData()
-// {
-// 	return correctedData;
-// }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////
