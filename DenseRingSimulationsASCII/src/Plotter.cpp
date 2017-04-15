@@ -113,15 +113,13 @@ TH2F* Plotter::getSlopeVsDistanceCandlePlot(vector<DataPoint>& data, double angl
 	double miny = 0.;
 	double maxy = 2.2;
 
-
 	string title = "Fit Slopes vs. Distance | Energy: " + to_string(energy) + " Angle: " + to_string(angle);
 
 	TH2F* graph = new TH2F(title.c_str(), title.c_str(), nx, minx, maxx, ny, miny, maxy);
 
 	vector<DataPoint> filteredData = DataPoint::filterData(data, angle, energy);
 
-  //Filters into several graphs
-	for (DataPoint d : data)
+	for (DataPoint d : filteredData)
 	{
 		string id = to_string(d.station_id);
 		//empty station ids is plotting all stations
@@ -130,6 +128,51 @@ TH2F* Plotter::getSlopeVsDistanceCandlePlot(vector<DataPoint>& data, double angl
 		{
 			graph->Fill(d.core_distance, (d.scint_tot/d.wcd_tot));       
 		}
+	}
+
+	graph->GetXaxis()->SetTitle("Core Distance");
+	graph->GetYaxis()->SetTitle("SSD [MIP] / WCD [VEM]");
+
+	return graph;
+}
+
+TGraph* Plotter::getSlopeVsDistanceSingleStation(vector<DataPoint>& data, vector<int> coreDistances, double angle, double energy, string stationId, Color_t color, Style_t style)
+{
+	string title = "Fit Slopes vs. Distance Two Stations| Energy: " + to_string(energy) + " Angle: " + to_string(angle);
+
+	TGraph* graph = new TGraph();
+	graph->SetTitle(title.c_str());
+	graph->SetMaximum(1.25);
+	graph->SetMinimum(0.5);
+	graph->SetMarkerStyle(style);
+	graph->SetMarkerColor(color);
+
+	vector<DataPoint> filteredData = DataPoint::filterData(data, angle, energy);
+
+	map<int, vector<double>> points;
+	for (int cd : coreDistances)
+	{
+		points.emplace(cd, vector<double>());
+	}
+	for (DataPoint d : filteredData)
+	{
+		string id = to_string(d.station_id);
+		if (id.substr(id.length()-2) == stationId)
+		{
+			points[d.core_distance].push_back(d.scint_tot/d.wcd_tot);
+		}
+	}
+	map<int, double> averagePoints;
+	for (auto& kv : points)
+	{
+		double average = accumulate(kv.second.begin(), kv.second.end(), 0.0)/kv.second.size();
+		averagePoints.emplace(kv.first, average);
+	}
+	int index = 0;
+	for (auto& kv : averagePoints)
+	{
+		graph->SetPoint(index, kv.first, kv.second);
+		index++;
 	}
 
 	graph->GetXaxis()->SetTitle("Core Distance");
