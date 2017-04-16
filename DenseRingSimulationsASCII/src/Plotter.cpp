@@ -98,7 +98,7 @@ TGraph* Plotter::getSlopesForCoreDistance(vector<DataPoint>& data, double angle,
 
 /*
 Creates a candle plot showing mip/vem ratio for the various core distances, can filter by sation id
-paramss
+params
   vector<DataPoint>& data All data to be filtered through
   double angle the angle to filter by
   double energy the energy to filter by
@@ -113,7 +113,7 @@ TH2F* Plotter::getSlopeVsDistanceCandlePlot(vector<DataPoint>& data, double angl
 	double miny = 0.;
 	double maxy = 2.2;
 
-	string title = "Fit Slopes vs. Distance | Energy: " + to_string(energy) + " Angle: " + to_string(angle);
+	string title = "Fit Slopes vs. Distance - Energy: " + to_string(energy) + " Angle: " + to_string(angle);
 
 	TH2F* graph = new TH2F(title.c_str(), title.c_str(), nx, minx, maxx, ny, miny, maxy);
 
@@ -136,9 +136,21 @@ TH2F* Plotter::getSlopeVsDistanceCandlePlot(vector<DataPoint>& data, double angl
 	return graph;
 }
 
+/*
+Creats a graph of three points, one for each core distance. The value is the average mip/vem.
+Meant to be used with another graph on same canvas
+params
+	vector<DataPoint>& data All data to be filtered through
+	vector<int> coreDistances All core distances
+  	double angle the angle to filter by
+  	double energy the energy to filter by
+  	string stationId Last two digits of station id to be plotted
+  	Color_t color color for the marker
+  	Style_t style Style for the marker
+*/
 TGraph* Plotter::getSlopeVsDistanceSingleStation(vector<DataPoint>& data, vector<int> coreDistances, double angle, double energy, string stationId, Color_t color, Style_t style)
 {
-	string title = "Fit Slopes vs. Distance Two Stations| Energy: " + to_string(energy) + " Angle: " + to_string(angle);
+	string title = "Fit Slopes vs. Distance Two Stations - Energy: " + to_string(energy) + " Angle: " + to_string(angle);
 
 	TGraph* graph = new TGraph();
 	graph->SetTitle(title.c_str());
