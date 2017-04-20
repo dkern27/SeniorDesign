@@ -390,6 +390,7 @@ void getConstantAngleRatioPlots(set<string> stationIds)
 					graph->SetLineStyle(2);
 				}
 				graph->SetMarkerColor(COLORS[i%ENERGIES.size()]);
+				graph->SetLineColor(COLORS[i%ENERGIES.size()]);
 				mg->Add(graph);
 				leg->AddEntry(graph, Plotter::MakeGraphName(ENERGIES[i], angle, id).c_str(), "LP");
 			}
