@@ -148,16 +148,17 @@ params
   	Color_t color color for the marker
   	Style_t style Style for the marker
 */
-TGraph* Plotter::getSlopeVsDistanceSingleStation(vector<DataPoint>& data, vector<int> coreDistances, double angle, double energy, string stationId, Color_t color, Style_t style)
+TGraphErrors* Plotter::getSlopeVsDistanceSingleStation(vector<DataPoint>& data, vector<int> coreDistances, double angle, double energy, string stationId, Color_t color, Style_t markerStyle, int lineStyle)
 {
 	string title = "Fit Slopes vs. Distance Two Stations - Energy: " + to_string(energy) + " Angle: " + to_string(angle);
 
-	TGraph* graph = new TGraph();
+	TGraphErrors* graph = new TGraphErrors();
 	graph->SetTitle(title.c_str());
 	graph->SetMaximum(1.25);
 	graph->SetMinimum(0.5);
-	graph->SetMarkerStyle(style);
+	graph->SetMarkerStyle(markerStyle);
 	graph->SetMarkerColor(color);
+	graph->SetLineStyle(lineStyle);
 
 	vector<DataPoint> filteredData = DataPoint::filterData(data, angle, energy);
 
@@ -184,6 +185,7 @@ TGraph* Plotter::getSlopeVsDistanceSingleStation(vector<DataPoint>& data, vector
 	for (auto& kv : averagePoints)
 	{
 		graph->SetPoint(index, kv.first, kv.second);
+		graph->SetPointError(index, 0, kv.second * 0.05); //Estimating 5% error
 		index++;
 	}
 
@@ -191,6 +193,20 @@ TGraph* Plotter::getSlopeVsDistanceSingleStation(vector<DataPoint>& data, vector
 	graph->GetYaxis()->SetTitle("SSD [MIP] / WCD [VEM]");
 
 	return graph;
+}
+
+TGraphErrors* Plotter::getSlopeVsDistanceSingleStation(vector<DataPoint>& data, vector<int> coreDistances, double angle, double energy, string stationId)
+{
+	TGraphErrors* tge = getSlopeVsDistanceSingleStation(data, coreDistances, angle, energy, stationId, kBlue, kFullCircle, 1);
+	string name = MakeGraphName(energy, angle, stationId);
+	tge->SetName(name.c_str());
+	return tge;
+}
+
+string Plotter::MakeGraphName(double energy, double angle, string stationId)
+{
+	string name = "E" + to_string(energy) + "_A" + to_string(angle) + "_D" + stationId;
+	return name;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////

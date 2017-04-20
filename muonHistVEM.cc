@@ -148,7 +148,8 @@ int main(int argc, char* argv[])
 	errPlot->SetMarkerColor(kBlue);
 	errPlot->SetMinimum(0);
 	errPlot->Draw("AP");
-	errPlot->Fit("pol0", "q");
+	errPlot->Fit("pol0");
+
 
 	//Write failed indexes to file to plot using muonHistBatchPlotFailed.C
 	if(didNotPlot.size() > 0)

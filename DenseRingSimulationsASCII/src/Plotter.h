@@ -6,6 +6,7 @@
 #include "TH2F.h"   // 2D Histogram
 #include "TGraph.h" // Basic scatter plot
 #include "TColor.h"
+#include "TGraphErrors.h"
 
 #include <vector>
 #include <set>
@@ -29,7 +30,11 @@ class Plotter
 		static TGraph* getSlopesForCoreDistance(vector<DataPoint>& data, double angle, double energy);
 
 		static TH2F* getSlopeVsDistanceCandlePlot(vector<DataPoint>& data, double angle, double energy, set<string> stationIds);
-		static TGraph* getSlopeVsDistanceSingleStation(vector<DataPoint>& data, vector<int> coreDistances, double angle, double energy, string stationId, Color_t color, Style_t style);
+		static TGraphErrors* getSlopeVsDistanceSingleStation(vector<DataPoint>& data, vector<int> coreDistances, double angle, double energy, string stationId, Color_t color, Style_t markerStyle, int lineStyle);
+
+		static TGraphErrors* getSlopeVsDistanceSingleStation(vector<DataPoint>& data, vector<int> coreDistances, double angle, double energy, string stationId);
+
+		static string MakeGraphName(double energy, double angle, string stationId);
 
 
 		//To make non static

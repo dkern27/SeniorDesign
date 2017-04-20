@@ -20,6 +20,8 @@
 #include "TFile.h"
 #include "TVector3.h"
 #include "TLegend.h"
+#include "TGraphErrors.h"
+#include "TMultiGraph.h"
 
 // Generic ROOT files, always include these
 #include "TMath.h"
@@ -45,8 +47,15 @@ void usage();
 bool isInteger(string str);
 set<string> getStationIds();
 set<string> getTwoStationIds();
+void getConstantEnergyRatioPlots(set<string> stationIds);
+void getConstantAngleRatioPlots(set<string> stationIds);
 
 //Global Variables
+const vector<double> ENERGIES = {18.6, 19.0, 19.5, 20.0};
+const vector<double> ANGLES = {0, 12, 25, 36, 45, 53};
+const vector<int> CORE_DISTANCES = {600, 800, 1000};
+const vector<string> STATION_IDS = {"00", "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"};
+const vector<Color_t> COLORS = {kBlue, kRed, kMagenta, kCyan, kGreen, kYellow};
 
 /*
 argc = number arguments, argv = array containing them so for example ./ReadADST $filename1 $filename2
@@ -69,11 +78,6 @@ int main(int argc, char **argv)
 	gStyle->SetPadGridY(true);
 	//Remove stats box
 	gStyle->SetOptStat(0);
-
-	//Maybe get these values when we read the files?
-	const vector<double> ENERGIES = {18.6, 19.0, 19.5, 20.0};
-	const vector<double> ANGLES = {0, 12, 25, 36, 45, 53};
-	const vector<int> CORE_DISTANCES = {600, 800, 1000};
 
   // -------------------
 	vector<DataPoint> data;
@@ -124,6 +128,7 @@ int main(int argc, char **argv)
 	cout << "3: Slopes at core distances, points" << endl;
 	cout << "4: Slopes at core distances, candle plot" << endl;
 	cout << "5: Slopes at core distances, compare two stations" << endl;
+	cout << "6: Slopes at core distances, constant angle or energy" << endl;
 
 	string options;
 	cin >> options;
@@ -131,7 +136,7 @@ int main(int argc, char **argv)
 	for (char& c : options) 
 	{
 		int n = c - '0';
-		if (n > 5 || n < 1)
+		if (n > 6 || n < 1)
 		{
 			cout << c << " is not a valid option, skipping" << endl;
 		}
@@ -211,8 +216,8 @@ int main(int argc, char **argv)
 					for (double angle : ANGLES)
 					{
 						TCanvas* c = new TCanvas();
-						TGraph* g = Plotter::getSlopeVsDistanceSingleStation(data, CORE_DISTANCES, angle, energy, stationOne, kRed, kFullCircle);
-						TGraph* g2 = Plotter::getSlopeVsDistanceSingleStation(data, CORE_DISTANCES, angle, energy, stationTwo, kBlue, kFullSquare);
+						TGraphErrors* g = Plotter::getSlopeVsDistanceSingleStation(data, CORE_DISTANCES, angle, energy, stationOne, kRed, kFullCircle, 1);
+						TGraphErrors* g2 = Plotter::getSlopeVsDistanceSingleStation(data, CORE_DISTANCES, angle, energy, stationTwo, kBlue, kFullSquare, 2);
 						g->Draw("ALP");
 						g2->Draw("LPSAME");
 
@@ -225,8 +230,26 @@ int main(int argc, char **argv)
 					}
 				}
 			}
+			else if (n==6)
+			{
+				set<string> stationIds = getTwoStationIds();
+				TGraphErrors* graph;
+				//Make all the plots we need
+				for (double energy : ENERGIES)
+				{
+					for (double angle : ANGLES)
+					{
+						for(string stationId : stationIds)
+						{
+							graph = Plotter::getSlopeVsDistanceSingleStation(data, CORE_DISTANCES, angle, energy, stationId);
+							gDirectory->GetList()->Add(graph);
+						}
+					}
+				}
+				getConstantEnergyRatioPlots(stationIds);
+				getConstantAngleRatioPlots(stationIds);
+			}
 		}
-
 	}
 
 	theApp.Run();
@@ -303,7 +326,81 @@ set<string> getTwoStationIds()
 	return stationIds;
 }
 
+void getConstantEnergyRatioPlots(set<string> stationIds)
+{
+	TGraphErrors* graph;
+	for (double energy : ENERGIES)
+	{
+		TCanvas* c = new TCanvas();
+		TMultiGraph* mg = new TMultiGraph();
+		TLegend* leg = new TLegend(0.75, 0.75, 1.0, 1.0);
+		string stationOne = *stationIds.begin();
+		string stationTwo = *next(stationIds.begin(),1);
+		for(string id : stationIds)
+		{
+			for (int i = 0; i < ANGLES.size(); i++)
+			{
+				graph = (TGraphErrors*)gDirectory->Get(Plotter::MakeGraphName(energy, ANGLES[i], id).c_str());
+				if(id == stationOne)
+				{
+					graph->SetMarkerStyle(kFullCircle);
+					graph->SetLineStyle(1);
+				}
+				else
+				{
+					graph->SetMarkerStyle(kFullTriangleUp);
+					graph->SetLineStyle(2);
+				}
+				graph->SetMarkerColor(COLORS[i%ANGLES.size()]);
+				mg->Add(graph);
+				leg->AddEntry(graph, Plotter::MakeGraphName(energy, ANGLES[i], id).c_str(), "LP");
+			}
+		}
+		mg->SetTitle(("Energy: " + to_string(energy)).c_str());
+		mg->Draw("ALP");
+		mg->GetXaxis()->SetTitle("Core Distance");
+		mg->GetYaxis()->SetTitle("SSD [MIP] / WCD [VEM]");
+		leg->Draw();
+		c->Update();
+	}
+}
 
-
+void getConstantAngleRatioPlots(set<string> stationIds)
+{
+	TGraphErrors* graph;
+	for (double angle : ANGLES)
+	{
+		TCanvas* c = new TCanvas();
+		TMultiGraph* mg = new TMultiGraph();
+		TLegend* leg = new TLegend(0.75, 0.75, 1.0, 1.0);
+		string stationOne = *stationIds.begin();
+		for(string id : stationIds)
+		{
+			for (int i = 0; i < ENERGIES.size(); i++)
+			{
+				graph = (TGraphErrors*)gDirectory->Get(Plotter::MakeGraphName(ENERGIES[i], angle, id).c_str());
+				if(id == stationOne)
+				{
+					graph->SetMarkerStyle(kFullCircle);
+					graph->SetLineStyle(1);
+				}
+				else
+				{
+					graph->SetMarkerStyle(kFullTriangleUp);
+					graph->SetLineStyle(2);
+				}
+				graph->SetMarkerColor(COLORS[i%ENERGIES.size()]);
+				mg->Add(graph);
+				leg->AddEntry(graph, Plotter::MakeGraphName(ENERGIES[i], angle, id).c_str(), "LP");
+			}
+		}
+		mg->SetTitle(("Angle: " + to_string(angle)).c_str());
+		mg->Draw("ALP");
+		mg->GetXaxis()->SetTitle("Core Distance");
+		mg->GetYaxis()->SetTitle("SSD [MIP] / WCD [VEM]");
+		leg->Draw();
+		c->Update();
+	}
+}
 
 
