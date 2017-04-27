@@ -55,7 +55,7 @@ const vector<double> ENERGIES = {18.6, 19.0, 19.5, 20.0};
 const vector<double> ANGLES = {0, 12, 25, 36, 45, 53};
 const vector<int> CORE_DISTANCES = {600, 800, 1000};
 const vector<string> STATION_IDS = {"00", "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"};
-const vector<Color_t> COLORS = {kBlue, kRed, kMagenta, kCyan, kGreen, kYellow};
+const vector<Color_t> COLORS = {kBlue, kRed, kMagenta, kCyan, kGreen, kOrange-3};
 
 /*
 argc = number arguments, argv = array containing them so for example ./ReadADST $filename1 $filename2
@@ -352,6 +352,7 @@ void getConstantEnergyRatioPlots(set<string> stationIds)
 					graph->SetLineStyle(2);
 				}
 				graph->SetMarkerColor(COLORS[i%ANGLES.size()]);
+				graph->SetLineColor(COLORS[i%ANGLES.size()]);
 				mg->Add(graph);
 				leg->AddEntry(graph, Plotter::MakeGraphName(energy, ANGLES[i], id).c_str(), "LP");
 			}
