@@ -50,12 +50,20 @@ set<string> getTwoStationIds();
 void getConstantEnergyRatioPlots(set<string> stationIds);
 void getConstantAngleRatioPlots(set<string> stationIds);
 
+//Function Declarations for Plotters
+void plotPoints(vector<DataPoint> data);
+void fitSlopes2DHistogram(vector<DataPoint> data, vector<DataPoint> minMaxData);
+void mipVemCandlePlots(vector<DataPoint> data);
+void mipVemCompareTwoStations(vector<DataPoint> data);
+void mipVemConstAngleOrEnergy(vector<DataPoint> data);
+
+
 //Global Variables
 const vector<double> ENERGIES = {18.6, 19.0, 19.5, 20.0};
-const vector<double> ANGLES = {0, 12, 25, 36, 45, 53};
+const vector<double> ANGLES = {0, 12, /*25, 36,*/ 45, 53};
 const vector<int> CORE_DISTANCES = {600, 800, 1000};
 const vector<string> STATION_IDS = {"00", "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"};
-const vector<Color_t> COLORS = {kBlue, kRed, kMagenta, kCyan, kGreen, kOrange-3};
+const vector<Color_t> COLORS = {kBlue, kRed, kMagenta+1, kCyan+2, kGreen+1, kOrange+7};
 
 /*
 argc = number arguments, argv = array containing them so for example ./ReadADST $filename1 $filename2
@@ -125,13 +133,13 @@ int main(int argc, char **argv)
 	cout << "(ex: 23 will plot options 2 and 3)" << endl;
 	cout << "1: Plot all points" << endl;
 	cout << "2: Show Fit Slopes on a 2D histogram" << endl;
-	cout << "3: Slopes at core distances, points" << endl;
-	cout << "4: Slopes at core distances, candle plot" << endl;
-	cout << "5: Slopes at core distances, compare two stations" << endl;
-	cout << "6: Slopes at core distances, constant angle or energy" << endl;
+	cout << "3: Slopes at core distances, candle plot" << endl;
+	cout << "4: Slopes at core distances, compare two stations" << endl;
+	cout << "5: Slopes at core distances, constant angle or energy" << endl;
 
 	string options;
 	cin >> options;
+
 
 	for (char& c : options) 
 	{
@@ -142,113 +150,26 @@ int main(int argc, char **argv)
 		}
 		else 
 		{
-			if (n == 1)
-			{
-        		// PLOT POINTS
-				TCanvas* c1 = new TCanvas();
-				TGraph* g1 = Plotter::plotData(data);
-				g1->Draw("AP");
-				c1->Update();
+			if (n == 1){
+        		plotPoints(data);
+
 			} 
-			else if (n == 2)
-			{
-        		// FIT SLOPES 2D HISTOGRAM
-				TCanvas* c2 = new TCanvas();
-				TH2F* fit_slopes = Plotter::make2DHistogram(data, ANGLES, ENERGIES, false);
-				fit_slopes->SetTitle("Fit Slopes");
-				fit_slopes->Draw("colz");
-				c2->Update();
-
-				TCanvas* c3 = new TCanvas();
-				TH2F* corrected_fit_slopes = Plotter::make2DHistogram(data, ANGLES, ENERGIES, true);
-				corrected_fit_slopes->SetTitle("Corrected Fit Slopes");
-				corrected_fit_slopes->Draw("colz");
-				c3->Update();
-
-				TCanvas* c4 = new TCanvas();
-				TH2F* corrected_fit_slopes2 = Plotter::make2DHistogram(minMaxData, ANGLES, ENERGIES, true);
-				corrected_fit_slopes2->SetTitle("Corrected Fit Slopes of min/max scint_tot data");
-				corrected_fit_slopes2->Draw("colz");
-				c4->Update();
+			else if (n == 2){
+        		fitSlopes2DHistogram(data, minMaxData);
+				
 			} 
-			else if (n == 3) 
-			{
-        		// FOR PLOTTING POINTS OF SLOPES AT CORE DIST
-				for (double energy : ENERGIES)
-				{
-					for (double angle : ANGLES)
-					{
-						string title = "Energy: " + to_string(energy) + " Angle: " + to_string(angle);
-						TCanvas* c = new TCanvas();
-						TGraph* g = Plotter::getSlopesForCoreDistance(data, angle, energy);
-						g->GetXaxis()->SetTitle("Core Distance");
-						g->GetYaxis()->SetTitle("SSD [MIP] / WCD [VEM]");
-						g->SetMarkerSize(.75);
-						g->SetMarkerStyle(20);
-						g->SetTitle(title.c_str());
-						g->Draw("AP");
-						c->Update();
-					}
-				}
-			} 
-			else if (n == 4)
-			{
-				set<string> stationIds = getStationIds();
-       			// FOR PLOTTING CANDLE PLOTS OF SLOPES AT CORE DIST
-				for (double energy : ENERGIES)
-				{
-					for (double angle : ANGLES)
-					{
-						TCanvas* c = new TCanvas();
-						TH2F* g = Plotter::getSlopeVsDistanceCandlePlot(data, angle, energy, stationIds);
-						g->Draw("candle2");
-						c->Update();
-					}
-				}
+			else if (n == 3){
+				mipVemCandlePlots(data);
+				
 			}
-			else if (n == 5)
-			{
-				set<string> stationIds = getTwoStationIds();
-				string stationOne = *stationIds.begin();
-				string stationTwo = *next(stationIds.begin(),1);
-				for (double energy : ENERGIES)
-				{
-					for (double angle : ANGLES)
-					{
-						TCanvas* c = new TCanvas();
-						TGraphErrors* g = Plotter::getSlopeVsDistanceSingleStation(data, CORE_DISTANCES, angle, energy, stationOne, kRed, kFullCircle, 1);
-						TGraphErrors* g2 = Plotter::getSlopeVsDistanceSingleStation(data, CORE_DISTANCES, angle, energy, stationTwo, kBlue, kFullSquare, 2);
-						g->Draw("ALP");
-						g2->Draw("LPSAME");
-
-						TLegend* legend = new TLegend(0.1, 0.75, 0.25, 0.9);
-						legend->AddEntry(g, stationOne.c_str(), "LP");
-						legend->AddEntry(g2, stationTwo.c_str(), "LP");
-						legend->Draw();
-
-						c->Update();
-					}
-				}
+			else if (n == 4){
+				mipVemCompareTwoStations(data);
+				
 			}
-			else if (n==6)
-			{
-				set<string> stationIds = getTwoStationIds();
-				TGraphErrors* graph;
-				//Make all the plots we need
-				for (double energy : ENERGIES)
-				{
-					for (double angle : ANGLES)
-					{
-						for(string stationId : stationIds)
-						{
-							graph = Plotter::getSlopeVsDistanceSingleStation(data, CORE_DISTANCES, angle, energy, stationId);
-							gDirectory->GetList()->Add(graph);
-						}
-					}
-				}
-				getConstantEnergyRatioPlots(stationIds);
-				getConstantAngleRatioPlots(stationIds);
+			else if (n==5){
+				mipVemConstAngleOrEnergy(data);
 			}
+				
 		}
 	}
 
@@ -405,4 +326,125 @@ void getConstantAngleRatioPlots(set<string> stationIds)
 	}
 }
 
+/*
+Plot all of the data on one plot. Uses all energies, angles, core distances. Plots mip vs vem
+params
+	vector<DataPoint> data : All of the data
+*/
+void plotPoints(vector<DataPoint> data){
+	TCanvas* c1 = new TCanvas();
+	TGraph* g1 = Plotter::plotData(data);
+	g1->Draw("AP");
+	c1->Update();
+}
+
+/*
+Makes 3 2D histograms of the slopes of the fitted data, filtered by angle and energy.
+Plotted angle vs energy. No units, only used to see the trend of the data.
+
+params
+	vector<DataPoint> data : all of the data
+	vector<DataPoint> mimMaxData : has only the data from the min and max energies and angles
+*/
+void fitSlopes2DHistogram(vector<DataPoint> data, vector<DataPoint> minMaxData){
+	TCanvas* c2 = new TCanvas();
+	TH2F* fit_slopes = Plotter::make2DHistogram(data, ANGLES, ENERGIES, false);
+	fit_slopes->SetTitle("Fit Slopes");
+	fit_slopes->Draw("colz");
+	c2->Update();
+
+	TCanvas* c3 = new TCanvas();
+	TH2F* corrected_fit_slopes = Plotter::make2DHistogram(data, ANGLES, ENERGIES, true);
+	corrected_fit_slopes->SetTitle("Corrected Fit Slopes");
+	corrected_fit_slopes->Draw("colz");
+	c3->Update();
+
+	TCanvas* c4 = new TCanvas();
+	TH2F* corrected_fit_slopes2 = Plotter::make2DHistogram(minMaxData, ANGLES, ENERGIES, true);
+	corrected_fit_slopes2->SetTitle("Corrected Fit Slopes of min/max scint_tot data");
+	corrected_fit_slopes2->Draw("colz");
+	c4->Update();
+}
+
+
+/*
+Creates a candle plot of the mip to vem ratios found by detectors at each given core distance.
+Plots seperated by angle and energy.
+
+params
+	vector<DataPoint> data : all of the data
+*/
+void mipVemCandlePlots(vector<DataPoint> data){
+	set<string> stationIds = getStationIds();
+	for (double energy : ENERGIES)
+	{
+		for (double angle : ANGLES)
+		{
+			TCanvas* c = new TCanvas();
+			TH2F* g = Plotter::getSlopeVsDistanceCandlePlot(data, angle, energy, stationIds);
+			g->Draw("candle2");
+			c->Update();
+		}
+	}
+}
+
+/*
+Plots the average mip to vem ratios found by the two desired detectors. Allows a comparison of the detectors.
+Plots seperated by angle and energy
+
+params
+	vector<DataPoint> data : all of the data
+*/
+
+void mipVemCompareTwoStations(vector<DataPoint> data){
+	set<string> stationIds = getTwoStationIds();
+	string stationOne = *stationIds.begin();
+	string stationTwo = *next(stationIds.begin(),1);
+	for (double energy : ENERGIES)
+	{
+		for (double angle : ANGLES)
+		{
+			TCanvas* c = new TCanvas();
+			TGraphErrors* g = Plotter::getSlopeVsDistanceSingleStation(data, CORE_DISTANCES, angle, energy, stationOne, kRed, kFullCircle, 1);
+			TGraphErrors* g2 = Plotter::getSlopeVsDistanceSingleStation(data, CORE_DISTANCES, angle, energy, stationTwo, kBlue, kFullSquare, 2);
+			g->Draw("ALP");
+			g2->Draw("LPSAME");
+
+			TLegend* legend = new TLegend(0.1, 0.75, 0.25, 0.9);
+			legend->AddEntry(g, stationOne.c_str(), "LP");
+			legend->AddEntry(g2, stationTwo.c_str(), "LP");
+			legend->Draw();
+
+			c->Update();
+		}
+	}
+}
+
+/*
+Makes plots of the mip to vem ratio over core distance at two desired detectors.
+Plots the data for all energies at each angle, and all angles at each energy.
+Allows us to see the affect of angle and energy on the mip to vem ratio
+
+params
+	vector<DataPoint> data : all of the data
+*/
+
+void mipVemConstAngleOrEnergy(vector<DataPoint> data){
+	set<string> stationIds = getTwoStationIds();
+	TGraphErrors* graph;
+	//Make all the plots we need
+	for (double energy : ENERGIES)
+	{
+		for (double angle : ANGLES)
+		{
+			for(string stationId : stationIds)
+			{
+				graph = Plotter::getSlopeVsDistanceSingleStation(data, CORE_DISTANCES, angle, energy, stationId);
+				gDirectory->GetList()->Add(graph);
+			}
+		}
+	}
+	getConstantEnergyRatioPlots(stationIds);
+
+}
 
