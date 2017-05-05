@@ -6,6 +6,7 @@
 /////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////
 
+//Constructor
 DataPoint::DataPoint(int station_id, double core_distance, double energy, double angle, double wcd_tot, double scint_tot, double corrected_scint_tot)
 {
 	this->station_id = station_id;
@@ -46,6 +47,7 @@ vector<DataPoint> DataPoint::ReadFile(ifstream& input_file, string file)
 	string::size_type tt = file.find('/');
 	stringstream(file.substr(t+1,tt-t-1))>>theta;
 
+	//If you want to see it print out hundreds of lines, uncomment the cout
 	//cout << "reading file: " << file << " Log(E/eV)= " << energy << " Zenith angle (Deg)= " << theta << endl;
 
 	// First line is made of headers - ignoring  
@@ -65,7 +67,11 @@ vector<DataPoint> DataPoint::ReadFile(ifstream& input_file, string file)
 	return data;
 }
 
-//I hate this function so much
+/*
+NOTE: NOT SURE IF WE NEED THIS ANYMORE SINCE WE KNOW THE GEOMETRY AND STATIONS 00 AND 06 SHOULD BE MAX AND MIN
+Takes a vector of data from a single file and gets the 2 points per core distance 
+that have the min and max scint_tot value
+*/
 vector<DataPoint> DataPoint::GetMinAndMaxData(vector<DataPoint>& data)
 {
 	DataPoint max600 (0,0,0,0,0,INT_MIN,0);
@@ -129,7 +135,7 @@ vector<DataPoint> DataPoint::GetMinAndMaxData(vector<DataPoint>& data)
 }
 
 /*
-Filters data by angle and/or energy. Used by plotData
+Filters data by angle and/or energy.
 params
 	vector<DataPoint> data : the data to filter
 	double angle : the angle to filter by
@@ -172,6 +178,10 @@ vector<DataPoint> DataPoint::filterData(vector<DataPoint>& data, double angle, d
 /////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////
 
+/*
+Applies a correction to a scint_tot value, based on geomtry of incoming shower
+Used for max scint_tot
+*/
 double DataPoint::doCorrectionOne(double scint_tot, double angle, double coreDistance, double height)
 {
 	if(angle == 0) return scint_tot;
@@ -179,6 +189,10 @@ double DataPoint::doCorrectionOne(double scint_tot, double angle, double coreDis
 	return scint_tot/abs(cos(phi));
 }
 
+/*
+Applies a correction to a scint_tot value, based on geomtry of incoming shower
+Used for min scint_tot
+*/
 double DataPoint::doCorrectionTwo(double scint_tot, double angle, double coreDistance, double height)
 {
 	if(angle == 0) return scint_tot;

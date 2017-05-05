@@ -1,0 +1,8 @@
+To compile:
+rootbuild -o muonHistVEM muonHistVEM.cc $ROOTLIBS
+
+To use:
+./muonHistVEM <rootfile>
+
+Can do polynomial or log normal fit. User is asked which one when program is run.
+Log normal takes much longer than polynomial.

@@ -12,6 +12,7 @@ params
 	vector<DataPoint> data : the data to filter
 	double angle : the angle to filter by. Default is -1 if do not need to filter
 	double energy : the energy to filter by. Default is -1 if do not need to filter
+	bool doCorrected : Whethere to use scint_tot or corrected_scint_tot, default is false
 */
 TGraph* Plotter::plotData(vector<DataPoint>& data, double angle, double energy, bool doCorrected)
 {
@@ -41,9 +42,9 @@ TGraph* Plotter::plotData(vector<DataPoint>& data, double angle, double energy, 
 /*
 Makes a single histogram of fit slopes
 params
-	vector<DataPoint>& data All data to be filtered through
-	vector<double> angles : the angles to filter by
-	vector<double> energies : the energies to filter by
+	vector<DataPoint>& data : Data to be fitted
+	vector<double> angles : the angles to use
+	vector<double> energies : the energies to use
 	bool corrected : whether to use the corrected scint_tot or regular
 */
 TH2F* Plotter::make2DHistogram(vector<DataPoint>& data, vector<double> angles, vector<double> energies, bool corrected)
@@ -54,9 +55,13 @@ TH2F* Plotter::make2DHistogram(vector<DataPoint>& data, vector<double> angles, v
 	{
 		vector<double> slopes;
 		if(!corrected)
+		{
 			slopes = getFitSlopes(data, angles[i], energies);
+		}
 		else
+		{
 			slopes = getCorrectedFitSlopes(data, angles[i], energies);
+		}
 
 		for (int j = 0; j < slopes.size(); j++)
 		{
@@ -70,39 +75,12 @@ TH2F* Plotter::make2DHistogram(vector<DataPoint>& data, vector<double> angles, v
 }
 
 /*
-Creates a graph showing mip/vem ratio for the various core distances
-params
-  vector<DataPoint>& data All data to be filtered through
-  double angle the angle to filter by
-  double energy the energy to filter by
-*/
-TGraph* Plotter::getSlopesForCoreDistance(vector<DataPoint>& data, double angle, double energy)
-{
-	TGraph* graph = new TGraph();
-
-	int index = 0;
-	for (DataPoint d : data)
-	{
-		if(d.energy == energy && d.angle == angle)
-		{
-			graph->SetPoint(index, d.core_distance, (d.scint_tot/d.wcd_tot));
-			index++;
-		}
-	}
-
-	graph->GetXaxis()->SetTitle("Core Distance");
-	graph->GetYaxis()->SetTitle("SSD [MIP] / WCD [VEM]");
-
-	return graph;
-}
-
-/*
 Creates a candle plot showing mip/vem ratio for the various core distances, can filter by sation id
 params
   vector<DataPoint>& data All data to be filtered through
   double angle the angle to filter by
   double energy the energy to filter by
-  set<int> stationIds station Ids to plot
+  set<string> stationIds station Ids to plot
 */
 TH2F* Plotter::getSlopeVsDistanceCandlePlot(vector<DataPoint>& data, double angle, double energy, set<string> stationIds)
 {
@@ -147,6 +125,7 @@ params
   	string stationId Last two digits of station id to be plotted
   	Color_t color color for the marker
   	Style_t style Style for the marker
+  	int lineStyle style for line
 */
 TGraphErrors* Plotter::getSlopeVsDistanceSingleStation(vector<DataPoint>& data, vector<int> coreDistances, double angle, double energy, string stationId, Color_t color, Style_t markerStyle, int lineStyle)
 {
@@ -160,13 +139,17 @@ TGraphErrors* Plotter::getSlopeVsDistanceSingleStation(vector<DataPoint>& data, 
 	graph->SetMarkerColor(color);
 	graph->SetLineStyle(lineStyle);
 
+	//Filter data by angle and energy
 	vector<DataPoint> filteredData = DataPoint::filterData(data, angle, energy);
 
-	map<int, vector<double>> points;
+	//Initialize map
+	map<int, vector<double>> points; //core distance and points at that core distance
 	for (int cd : coreDistances)
 	{
 		points.emplace(cd, vector<double>());
 	}
+
+	//Add data to map
 	for (DataPoint d : filteredData)
 	{
 		string id = to_string(d.station_id);
@@ -175,12 +158,17 @@ TGraphErrors* Plotter::getSlopeVsDistanceSingleStation(vector<DataPoint>& data, 
 			points[d.core_distance].push_back(d.scint_tot/d.wcd_tot);
 		}
 	}
-	map<int, double> averagePoints;
+
+	//Get average value of mip/vem for a core distance
+	map<int, double> averagePoints; //core distance and average mip/vem
 	for (auto& kv : points)
 	{
+		//Get all values in vector and average them
 		double average = accumulate(kv.second.begin(), kv.second.end(), 0.0)/kv.second.size();
 		averagePoints.emplace(kv.first, average);
 	}
+
+	//Add points to graph
 	int index = 0;
 	for (auto& kv : averagePoints)
 	{
@@ -195,6 +183,9 @@ TGraphErrors* Plotter::getSlopeVsDistanceSingleStation(vector<DataPoint>& data, 
 	return graph;
 }
 
+/*
+Basic version of above function where point/line settings are not specfied so we use a default
+*/
 TGraphErrors* Plotter::getSlopeVsDistanceSingleStation(vector<DataPoint>& data, vector<int> coreDistances, double angle, double energy, string stationId)
 {
 	TGraphErrors* tge = getSlopeVsDistanceSingleStation(data, coreDistances, angle, energy, stationId, kBlue, kFullCircle, 1);
@@ -203,6 +194,9 @@ TGraphErrors* Plotter::getSlopeVsDistanceSingleStation(vector<DataPoint>& data, 
 	return tge;
 }
 
+/*
+Makes a string for the nae of a graph based on energy, angle, and stationId
+*/
 string Plotter::MakeGraphName(double energy, double angle, string stationId)
 {
 	string name = "E" + to_string(energy) + "_A" + to_string(angle) + "_D" + stationId;
@@ -225,8 +219,6 @@ params
 vector<double> Plotter::getFitSlopes(vector<DataPoint>& data, double angle, vector<double> energies)
 {
 	vector<TGraph*> graphs;
-	//If we want a graph with all points
-  	//graphs.push_back(new TGraph()); //All energies
 	for(int i = 0; i < energies.size(); i++)
 	{
 		graphs.push_back(new TGraph());
@@ -239,9 +231,6 @@ vector<double> Plotter::getFitSlopes(vector<DataPoint>& data, double angle, vect
 	{
 		if(d.angle == angle)
 		{
-			//graphs[0]->SetPointindexes[0], d.wcd_tot, d.scint_tot);
-			//indexes[0]++;
-			//This could be simplified with an int set in the if/else, then add to graph after
 			if (d.energy == energies[0])
 			{
 				graphs[0]->SetPoint(indexes[0], d.wcd_tot, d.scint_tot);
@@ -286,8 +275,6 @@ params
 vector<double> Plotter::getCorrectedFitSlopes(vector<DataPoint>& data, double angle, vector<double> energies)
 {
 	vector<TGraph*> graphs;
-	//If we want a graph with all points
-  	//graphs.push_back(new TGraph()); //All energies
 	for(int i = 0; i < energies.size(); i++)
 	{
 		graphs.push_back(new TGraph());
@@ -300,9 +287,6 @@ vector<double> Plotter::getCorrectedFitSlopes(vector<DataPoint>& data, double an
 	{
 		if(d.angle == angle)
 		{
-			//graphs[0]->SetPointindexes[0], d.wcd_tot, d.scint_tot);
-			//indexes[0]++;
-			//This could be simplified with an int set in the if/else, then add to graph after
 			if (d.energy == energies[0])
 			{
 				graphs[0]->SetPoint(indexes[0], d.wcd_tot, d.corrected_scint_tot);

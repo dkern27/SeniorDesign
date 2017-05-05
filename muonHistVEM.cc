@@ -27,7 +27,8 @@
 
 using namespace std;
 
-TGraphErrors* fillTreeWithVem(TTree*& muonTree, TH1I*& muonHist, TBranch*& vemBranch, TBranch*& vemErrorBranch, vector<int>& didNotPlot);
+//Function Prototypes
+TGraphErrors* fillTreeWithVem(TTree*& muonTree, TH1I*& muonHist, TBranch*& vemBranch, TBranch*& vemErrorBranch);
 TF1* findVemPoly2(TH1I*);
 TF1* findVemLogNormal(TH1I* muonHistogram);
 TF1* findVemMultBinsTest(TH1I*);
@@ -35,6 +36,7 @@ float findVemErrorPoly2(TF1*);
 float findVemErrorLogNormal(TF1* fit);
 
 bool useLogNormalFit = false;
+
 
 void Usage(string myName) 
 {
@@ -47,7 +49,7 @@ void Usage(string myName)
 	<< "VEM for each histogram, adding it to a new branch in the ROOT tree. " << endl << endl;
 	cout << " NOTES : " << endl;
 	cout << "Using the Log Normal Fit takes much longer than the Polynomial fit" << endl;
-	cout << "Sometimes finds VEM at very high numbers, well above the range of the histogram. Run the program again to try again." << endl << endl;
+	cout << "Polynomial fit sometimes finds VEM at very high numbers, well above the range of the histogram. Run the program again to try again." << endl << endl;
 
 	exit(0);
 }
@@ -121,6 +123,7 @@ int main(int argc, char* argv[])
 		vemErrorBranch = muonTree->Branch("muonHistVemError", &muonHistVemError, "muonHistVemError/D");
 	}
 
+	//Allow user to choose polynomial or log normal fit
 	cout << "Choose a fit to use: " << endl;
 	cout << "1. Second degree polynomial" << endl;
 	cout << "2. Log Normal" << endl;
@@ -136,30 +139,13 @@ int main(int argc, char* argv[])
 	useLogNormalFit = (choice == 2);
 
 	//Find VEM for each histogram
-	vector<int> didNotPlot;
-  	TGraphErrors *errPlot = fillTreeWithVem(muonTree, muonHist, vemBranch, vemErrorBranch, didNotPlot);
+  	TGraphErrors *errPlot = fillTreeWithVem(muonTree, muonHist, vemBranch, vemErrorBranch);
 
   	// overwrite the muon tree to include the new data
 	muonTree->Write("", TObject::kOverwrite);
 	TCanvas *canvas = new TCanvas();
-	errPlot->SetTitle("Errors");
-	errPlot->GetYaxis()->SetTitle("VEM");
-	errPlot->SetMarkerStyle(20);
-	errPlot->SetMarkerColor(kBlue);
-	errPlot->SetMinimum(0);
 	errPlot->Draw("AP");
 	errPlot->Fit("pol0");
-
-
-	//Write failed indexes to file to plot using muonHistBatchPlotFailed.C
-	if(didNotPlot.size() > 0)
-	{
-		ofstream file("failedIndexes.txt", ofstream::trunc);
-		for (int i = 0; i < didNotPlot.size(); i++)
-			file << didNotPlot[i] << endl;
-		cout << "Failed plot indexes written to "<< "failedIndexes.txt" << endl;
-		file.close();
-	}
 
   	//f.Close();
 	theApp.Run();
@@ -170,10 +156,24 @@ int main(int argc, char* argv[])
 	return EXIT_SUCCESS;
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////END OF MAIN//////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
 /*
 Loops through histograms in the tree and finds the VEM and error in the VEM. Returns plot of VEM with error bars.
+Returns TGraphErrors with VEM and errors for full range of data
+Params
+	TTree*& muonTree Tree containing all data
+	TH1I*& muonHist Histogram for when we get entries from tree
+	TBranch*& vemBranch Branch to fill with VEM
+	TBranch*& vemErrorBranch Branch to fill with VEM error
+	vector<int>& didNotPlot Holds entry number for histograms that fail fit
 */
-TGraphErrors* fillTreeWithVem(TTree*& muonTree, TH1I*& muonHist, TBranch*& vemBranch, TBranch*& vemErrorBranch, vector<int>& didNotPlot)
+TGraphErrors* fillTreeWithVem(TTree*& muonTree, TH1I*& muonHist, TBranch*& vemBranch, TBranch*& vemErrorBranch)
 {
 	cout << "Finding VEM from histograms..." << endl;
 	// find the size of the tree to limit looping beyond the end of the tree
@@ -181,6 +181,7 @@ TGraphErrors* fillTreeWithVem(TTree*& muonTree, TH1I*& muonHist, TBranch*& vemBr
 	TGraphErrors *errPlot = new TGraphErrors();
 	int point = 0;
 
+	//Loop through every entry in tree
 	for (int treeStep = 0; treeStep < treeSize; treeStep++) 
 	{
 		muonTree->GetEntry(treeStep);
@@ -193,12 +194,14 @@ TGraphErrors* fillTreeWithVem(TTree*& muonTree, TH1I*& muonHist, TBranch*& vemBr
 
 		TF1* fit = NULL;
 		float error;
+
+		//There is probably a better way to do this if/else if/else, 
+		//but I did not want to make another function for polynomial vs log normal fitting
 		if(useLogNormalFit)
 		{
 			fit = findVemLogNormal(muonHist);
 			if(fit == NULL)
 			{
-				didNotPlot.push_back(treeStep);
 				continue;
 			}
 			error = findVemErrorLogNormal(fit);
@@ -214,15 +217,17 @@ TGraphErrors* fillTreeWithVem(TTree*& muonTree, TH1I*& muonHist, TBranch*& vemBr
 			fit = findVemPoly2(muonHist);
 			if(fit == NULL)
 			{
-				didNotPlot.push_back(treeStep);
 				continue;
 			}
 			error = findVemErrorPoly2(fit);
 		}
 
+		//Filter on chi square test, most values are around 5, so we chose 8 to filter out.
 		double reducedChiSquare = fit->GetChisquare()/fit->GetNDF();
 		if(reducedChiSquare > 8)
+		{
 			continue;
+		}
 
 		double muonHistVem = fit->GetMaximumX();
 		double muonHistVemError = error;
@@ -237,20 +242,30 @@ TGraphErrors* fillTreeWithVem(TTree*& muonTree, TH1I*& muonHist, TBranch*& vemBr
 		vemBranch->Fill();
 		vemErrorBranch->Fill();
 	}
+
+	errPlot->SetTitle("VEM with Errors");
+	errPlot->GetYaxis()->SetTitle("VEM");
+	errPlot->SetMarkerStyle(20);
+	errPlot->SetMarkerColor(kBlue);
+	errPlot->SetMinimum(0);
+
 	return errPlot;
 }
 
 /*
 Finds VEM for a single histogram using peak finding and several fits of a polynomial
+Returns fit or NULL
 */
 TF1* findVemPoly2(TH1I* muonHistogram) 
 {
-  	//Search for peaks
+	//Rebin histogram to reduce noise
 	int binNumber = 5;
 	muonHistogram->Rebin(binNumber);
+	//Search for intiial peaks
 	TSpectrum *spec = new TSpectrum(3);
-	spec->Search(muonHistogram, 3, "nodrawnobackground", 0.25);
+	spec->Search(muonHistogram, 3, "nodrawnobackground", 0.25); //nodraw prevents drawing, nobackground prevents it from remmoving what it thinks is background noise
 	float* xArray = spec->GetPositionX();
+	//Take peak with highest X-value as our initial guess
 	float maxX = *max_element(xArray, xArray+3);
 
 	int count=0;
@@ -268,22 +283,27 @@ TF1* findVemPoly2(TH1I* muonHistogram)
 		count++;
 		maxX=f1->GetMaximumX();
 	}
+	//If fit fails return NULL
 	return NULL;
 }
 
 /*
 Finds VEM for a single histogram using a log normal fit
+Returns fit or NULL
 */
 TF1* findVemLogNormal(TH1I* muonHistogram) 
 {
-  	//Search for peaks
+  	//Rebin histogram at 5 to reduce noise
 	int binNumber = 5;
 	muonHistogram->Rebin(binNumber);
+	//Search for initial peaks
 	TSpectrum *spec = new TSpectrum(3);
-	spec->Search(muonHistogram, 3, "nodrawnobackground", 0.25);
+	spec->Search(muonHistogram, 3, "nodrawnobackground", 0.25); //nodraw prevents drawing, nobackground prevents it from remmoving what it thinks is background noise
 	float* xArray = spec->GetPositionX();
+	//Take peak with highest X-value as our initial guess
 	float maxX = *max_element(xArray, xArray+spec->GetNPeaks());
 	
+	//20 is probably overkill for the log normal, no histograms have failed in our dataset
 	for (int i = 0; i < 20; i ++)
 	{
 		TF1* f1 = new TF1("f1", "[0]*ROOT::Math::lognormal_pdf(x, [1], [2])", maxX-50, 1200);
