@@ -185,13 +185,24 @@ int main(int argc, char **argv)
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 
-//DO THIS LATER
 void usage()
 {
-	printf("Usage:\n"
-		"Describe here \n");
+        cout << "Usage:" << endl;
+        cout << "To run: ./DRS_Plots lg*/*/*" << endl;
+        cout << "lg*/*/* Is the directories of data" << endl;
+        cout << "Description:" << endl;
+        cout << "Reads in all specified data files and creates DataPoint objects out of the rows" << endl;
+        cout << "Various plotting methods can then be done by following the instructions when the program is run." << endl;
+
+        exit(0);
 }
 
+
+/*
+Checks if the string contains only integers
+params
+	srint str : the possible integer
+*/
 bool isInteger(string str)
 {
 	if(str.length() == 0)
@@ -205,6 +216,11 @@ bool isInteger(string str)
 	return true;
 }
 
+/*
+Gets station ids from the user
+params
+	none
+*/
 set<string> getStationIds()
 {
 	cout << "Enter the last two digits of the station ids one at a time. No station ids will plot all station ids. Enter 'done' to start plotting." << endl;
@@ -226,6 +242,12 @@ set<string> getStationIds()
 	return stationIds;
 }
 
+
+/*
+Gets only two station ids from the user
+params
+	none
+*/
 set<string> getTwoStationIds()
 {
 	cout << "Enter the last two digits of two stations' ids one at a time" << endl;
@@ -247,6 +269,12 @@ set<string> getTwoStationIds()
 	return stationIds;
 }
 
+/*
+Creates a plot of mip/vem ratio for four different core distances.
+Holds energy constant and produces a line for each angle
+params
+	set<string> stationIds : The station ids the user provided
+*/
 void getConstantEnergyRatioPlots(set<string> stationIds)
 {
 	TGraphErrors* graph;
@@ -287,6 +315,12 @@ void getConstantEnergyRatioPlots(set<string> stationIds)
 	}
 }
 
+/*
+Creates a plot of mip/vem ratio for four different core distances.
+Holds angle constant and produces a line for each energy
+params
+	set<string> stationIds : The station ids the user provided
+*/
 void getConstantAngleRatioPlots(set<string> stationIds)
 {
 	TGraphErrors* graph;
@@ -445,6 +479,7 @@ void mipVemConstAngleOrEnergy(vector<DataPoint> data){
 		}
 	}
 	getConstantEnergyRatioPlots(stationIds);
+	getConstantAngleRatioPlots(stationIds);
 
 }
 
