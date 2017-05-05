@@ -1,3 +1,13 @@
+------------------------------------------------------------
+ABOUT THE PROGRAM
+------------------------------------------------------------
+To compile:
+	make
+
+DRS_Plots provides several different plotting functions to the data including, raw data, 2D histogram of fit slopes, candle plots by core distance, and average mip/vem by core distance. The candle plots and average mip/vem allows us to also filter by which stations we want to see.
+
+
+ABOUT THE DATA
 --------
 CONTENTS
 --------

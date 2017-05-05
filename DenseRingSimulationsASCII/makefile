@@ -4,6 +4,9 @@
 #To allow debugging : 'make debug'
 #To remove compiled program (does not remove debug .dSYM): 'make clean'
 
+#If ROOTLIBS is exported, then we do not need $(ROOTLIBS)
+#The first part of ROOTLIBS is where root is installed
+# /opt/local/lib/root5 is where mine was installed
 
 CC=g++
 CFLAGS = -Wall `root-config --cflags`
